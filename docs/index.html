@@ -2404,10 +2404,10 @@
     <div class="noaccess-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ga-noaccess-title">
       <div class="noaccess-emoji">😞</div>
       <div id="ga-noaccess-title" class="noaccess-title">Que pena! Você não tem acesso a esses dados</div>
-      <div class="noaccess-body">Esse painel mostra informações comerciais internas, então só carrega os números pra quem está logado na conta Microsoft da empresa. Faça login em outra aba e recarregue esta página pra ver os dados.</div>
+      <div class="noaccess-body">Este painel contém informações comerciais de uso interno. Para visualizar os dados, é necessário estar autenticado com sua conta corporativa Microsoft.</div>
       <div class="noaccess-actions">
-        <button class="noaccess-btn primary" type="button" onclick="window.location.reload()">Recarregar página</button>
-        <button class="noaccess-btn secondary" type="button" onclick="document.getElementById('ga-noaccess-modal').classList.remove('is-open')">Entendi</button>
+        <button id="ga-noaccess-reload" class="noaccess-btn primary" type="button">Recarregar página</button>
+        <button id="ga-noaccess-dismiss" class="noaccess-btn secondary" type="button">Entendi</button>
       </div>
     </div>
   </div>
@@ -2421,6 +2421,17 @@
         }
       }
     }
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('#ga-noaccess-reload')) {
+        window.location.reload();
+      } else if (e.target.closest('#ga-noaccess-dismiss')) {
+        var __m = document.getElementById('ga-noaccess-modal');
+        if (__m) {
+          __m.classList.remove('is-open');
+          __m.setAttribute('aria-hidden', 'true');
+        }
+      }
+    });
     if (document.readyState === 'complete') {
       __checkAprovacaoGestorAccess();
     } else {
