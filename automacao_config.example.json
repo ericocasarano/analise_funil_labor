@@ -14,7 +14,8 @@
   "paths": {
     "history_dir": "./historico",
     "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao",
-    "bloco3_json_dir": "C:\\CAMINHO\\PARA\\Entrada\\OrcamentosRevisadosExtracao"
+    "bloco3_json_dir": "C:\\CAMINHO\\PARA\\Entrada\\OrcamentosRevisadosExtracao",
+    "aprovacao_gestor_publish_dir": "C:\\CAMINHO\\PARA\\Producao\\StaticWebApp"
   },
   "scripts": {
     "step1": "./gerar_oportunidades_reais_codes.py",

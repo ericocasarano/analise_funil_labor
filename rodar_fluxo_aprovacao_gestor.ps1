@@ -10,6 +10,7 @@ param(
   [ValidateSet("sem_ruido", "com_ruido")]
   [string]$Visao = "com_ruido",
   [switch]$UsarBloco3,
+  [switch]$NoPublicar,
   [switch]$ForceRun
 )
 
@@ -148,6 +149,7 @@ if ($UsarBloco3 -and -not $Bloco3JsonDir) { $Bloco3JsonDir = $configObj.paths.bl
 if ($UsarBloco3 -and -not $Bloco3JsonDir) {
   throw "Informe -Bloco3JsonDir ou configure 'paths.bloco3_json_dir' em $Config."
 }
+$publishDir = $configObj.paths.aprovacao_gestor_publish_dir
 
 Write-Host "Iniciando fluxo Painel Aprovacao do Gestor..."
 Write-Host "Timestamp da rodada: $timestamp"
@@ -287,11 +289,28 @@ try {
   Invoke-Python -PythonExecutable $pythonExe -Arguments $analiseArgs
 
   Write-Host "Atualizando slide interativo - Aprovacao Gestor..."
+  $slideJs = ".\Slide de Win Rate Interativo\data\aprovacao_gestor_latest.js"
   Invoke-Python -PythonExecutable $pythonExe -Arguments @(
     ".\atualizar_slide_aprovacao_gestor_json.py",
     "-i", $outputJson,
-    "--visao", $Visao
+    "--visao", $Visao,
+    "-o", $slideJs
   )
+
+  if ($NoPublicar) {
+    Write-Host "NoPublicar informado. Slide mantido apenas localmente em:" $slideJs
+  }
+  elseif ($publishDir) {
+    if (-not (Test-Path $publishDir)) {
+      throw "Diretorio de aprovacao_gestor_publish_dir nao encontrado: $publishDir"
+    }
+    $publishDestino = Join-Path $publishDir "aprovacao_gestor_latest.js"
+    Copy-Item $slideJs $publishDestino -Force
+    Write-Host "Slide publicado para:" $publishDestino
+  }
+  else {
+    Write-Host "aprovacao_gestor_publish_dir nao configurado. Painel nao foi publicado no SharePoint."
+  }
 
   $runGuardSucceeded = $true
   $fimExecucao = Get-Date
