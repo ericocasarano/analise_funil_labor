@@ -1,0 +1,26 @@
+# Dados gerados a cada rodada do pipeline (nao sao codigo-fonte)
+entrada/
+historico/
+alertas/
+graficos/
+.run_guard/
+
+# Snapshot de dados consumido pelo dashboard (regenerado a cada rodada)
+Slide de Win Rate Interativo/data/*.js
+
+# Python
+__pycache__/
+*.pyc
+
+# Excel lock files temporarios
+~$*.xlsx
+
+# Configuracao com segredos (webhook, IDs) - usar automacao_config.example.json como base
+automacao_config.json
+
+# Historico da xlsx de analise antiga (arquivo solto no repo)
+historico/~$*.xlsx
+
+# Arquivos de rascunho/teste
+tmp_*.js
+_teste_*

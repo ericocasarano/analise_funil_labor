@@ -1,0 +1,39 @@
+EVALUATE
+SELECTCOLUMNS(
+    SUMMARIZECOLUMNS(
+        'BIProdutoConversao'[IDOrcamentoPrinc],
+        'BIProdutoConversao'[DtInclusao],
+        'BIProdutoConversao'[CodigoErp],
+        'BIProdutoConversao'[Descricao],
+        'BIProdutoConversao'[Quantidade],
+        'BIProdutoConversao'[Valor],
+        'BIProdutoConversao'[VlTot],
+
+        FILTER(
+            'dCalendario',
+            'dCalendario'[Ano Atual] = "Ano Atual" &&
+            'dCalendario'[Mês Atual] = "Mês Atual"
+        ),
+        FILTER(
+            'BIOrcamentoConversao',
+            'BIOrcamentoConversao'[oportunidade] = FALSE() &&
+            'BIOrcamentoConversao'[Recompra] = FALSE()
+        ),
+        FILTER(
+            'Licitacao',
+            'Licitacao'[LIC] = "Não"
+        ),
+        FILTER(
+            'BIProdutoConversao',
+            YEAR('BIProdutoConversao'[DtInclusao]) = YEAR(TODAY()) &&
+            MONTH('BIProdutoConversao'[DtInclusao]) = MONTH(TODAY())
+        )
+    ),
+    "IDOrcamentoPrinc", [IDOrcamentoPrinc],
+    "DtInclusao", [DtInclusao],
+    "CodigoErp", [CodigoErp],
+    "Descricao", [Descricao],
+    "Quantidade", [Quantidade],
+    "Valor", [Valor],
+    "VlTot", [VlTot]
+)

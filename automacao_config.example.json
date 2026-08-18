@@ -1,0 +1,72 @@
+
+{
+  "python_executable": "py -3.12",
+  "power_bi": {
+    "tenant_id": "SEU_TENANT_ID",
+    "workspace_name": "Nome do Workspace no Power BI",
+    "workspace_id": "SEU_WORKSPACE_ID",
+    "dataset_name": "Nome do Dataset",
+    "dataset_id": "SEU_DATASET_ID",
+    "output_dir": "./entrada",
+    "dax1_path": "./dax/dax1_funil_conversao.dax",
+    "dax2_path": "./dax/dax2_itens_orcamento.dax"
+  },
+  "paths": {
+    "history_dir": "./historico",
+    "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao",
+    "bloco3_json_dir": "C:\\CAMINHO\\PARA\\Entrada\\OrcamentosRevisadosExtracao"
+  },
+  "scripts": {
+    "step1": "./gerar_oportunidades_reais_codes.py",
+    "step2": "./gerar_itens_perdas_reais.py"
+  },
+  "inputs": {
+    "ruidos": "./entrada/dax1_remocao_ruidos_base.xlsx",
+    "itens": "./entrada/dax2_itens_orcamento_base.xlsx"
+  },
+  "outputs": {
+    "oportunidades_stem": "oportunidades_reais_auto",
+    "itens_perdas_stem": "itens_perdas_reais_auto",
+    "sheet_oportunidades": "Lista_Oportunidades_Reais"
+  },
+  "filters": {
+    "start": "",
+    "end": "",
+    "tipo_perda": "todas",
+    "modo_data_itens": "criacao"
+  },
+  "cluster": {
+    "delta_horas": 360,
+    "sim_min": 0.5,
+    "debug_id": null
+  },
+  "rankings": {
+    "top": 50,
+    "top_vendedor": 10
+  },
+  "alerts": {
+    "enabled": true,
+    "output_dir": "./alertas",
+    "output_stem": "alertas_funil",
+    "insight_json_dir": "C:\\CAMINHO\\PARA\\Monitoramento Comercial - FunilInsights",
+    "environments": {
+      "producao": {
+        "insight_json_dir": "C:\\CAMINHO\\PARA\\Producao\\FunilInsights",
+        "comparativo_json_dir": "C:\\CAMINHO\\PARA\\Producao\\FunilComparativos"
+      },
+      "teste": {
+        "insight_json_dir": "C:\\CAMINHO\\PARA\\Teste\\FunilInsights_teste",
+        "comparativo_json_dir": "C:\\CAMINHO\\PARA\\Teste\\FunilComparativos_teste"
+      }
+    },
+    "losses_sheet": "Base_Nao_Convertidas",
+    "items_sheet": "Itens_Nao_Convertidas",
+    "top_vendedores_html": 30,
+    "top_itens_por_vendedor": 3,
+    "status_top_n_por_vendedor": 2,
+    "status_top_n_geral": 5,
+    "min_qtd_perdas": 1,
+    "min_valor_perdido": 0,
+    "teams_webhook_url": "SUA_URL_DE_WEBHOOK_DO_POWER_AUTOMATE"
+  }
+}
