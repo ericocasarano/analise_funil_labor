@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="https://bunzlbr.sharepoint.com/:u:/r/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/aprovacao_gestor_latest.js?d=wdad7eced32474d54b7bb9fac07a22218&csf=1&web=1&e=f0W2qz"></script>
+<script src="https://bunzlbr.sharepoint.com/:u:/r/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/aprovacao_gestor_latest.js?d=wdad7eced32474d54b7bb9fac07a22218&csf=1&web=1&e=f0W2qz" onerror="window.__APROVACAO_GESTOR_DATA_FAILED = true;"></script>
 </head>
 <body>
 <x-dc>
@@ -419,6 +419,71 @@
     justify-content:center;
     cursor:pointer;
     box-shadow:var(--shadow);
+  }
+
+  .noaccess-modal{
+    position:fixed;
+    inset:0;
+    z-index:70;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+    background:rgba(10,22,52,0.55);
+    backdrop-filter:blur(10px);
+  }
+  .noaccess-modal.is-open{
+    display:flex;
+  }
+  .noaccess-modal-dialog{
+    width:min(440px, calc(100vw - 48px));
+    border-radius:24px;
+    border:1px solid rgba(217,226,240,0.92);
+    background:linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,249,255,0.97) 100%);
+    box-shadow:0 30px 70px rgba(17,32,78,0.24);
+    padding:32px 28px 26px;
+    text-align:center;
+  }
+  .noaccess-emoji{
+    font-size:44px;
+    line-height:1;
+    margin-bottom:14px;
+  }
+  .noaccess-title{
+    font-size:19px;
+    font-weight:800;
+    color:var(--navy);
+    margin-bottom:10px;
+  }
+  .noaccess-body{
+    font-size:13.5px;
+    color:#5b6b92;
+    line-height:1.5;
+    margin-bottom:22px;
+  }
+  .noaccess-actions{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .noaccess-btn{
+    font-family:inherit;
+    font-size:13px;
+    font-weight:700;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .noaccess-btn.primary{
+    background:var(--blue);
+    color:#fff;
+    border-color:var(--blue);
+  }
+  .noaccess-btn.secondary{
+    background:#fff;
+    color:var(--navy);
   }
   .history-kpis{
     margin-top:20px;
@@ -2334,6 +2399,35 @@
       </div>
     </div>
   </div>
+
+  <div id="ga-noaccess-modal" class="noaccess-modal" aria-hidden="true">
+    <div class="noaccess-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ga-noaccess-title">
+      <div class="noaccess-emoji">😞</div>
+      <div id="ga-noaccess-title" class="noaccess-title">Que pena! Você não tem acesso a esses dados</div>
+      <div class="noaccess-body">Esse painel mostra informações comerciais internas, então só carrega os números pra quem está logado na conta Microsoft da empresa. Faça login em outra aba e recarregue esta página pra ver os dados.</div>
+      <div class="noaccess-actions">
+        <button class="noaccess-btn primary" type="button" onclick="window.location.reload()">Recarregar página</button>
+        <button class="noaccess-btn secondary" type="button" onclick="document.getElementById('ga-noaccess-modal').classList.remove('is-open')">Entendi</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    function __checkAprovacaoGestorAccess() {
+      if (window.__APROVACAO_GESTOR_DATA_FAILED || !window.APROVACAO_GESTOR_DATA) {
+        var __noAccessModal = document.getElementById('ga-noaccess-modal');
+        if (__noAccessModal) {
+          __noAccessModal.classList.add('is-open');
+          __noAccessModal.setAttribute('aria-hidden', 'false');
+        }
+      }
+    }
+    if (document.readyState === 'complete') {
+      __checkAprovacaoGestorAccess();
+    } else {
+      window.addEventListener('load', __checkAprovacaoGestorAccess);
+    }
+    setTimeout(__checkAprovacaoGestorAccess, 4000);
+  </script>
 
   <div id="ga-history-modal" class="history-modal" aria-hidden="true">
     <div class="history-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="ga-history-title">
