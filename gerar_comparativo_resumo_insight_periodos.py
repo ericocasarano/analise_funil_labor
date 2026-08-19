@@ -78,7 +78,7 @@ def parse_args():
         "-o",
         "--output",
         default="",
-        help="Arquivo JSON de saida. Se vazio, salva em alertas/comparativo_win_rate_periodos_<timestamp>.json",
+        help="Arquivo JSON de saida. Se vazio, salva em alertas/comparativo_resumo_insight_card_teams_<timestamp>.json",
     )
     return parser.parse_args()
 
@@ -179,7 +179,7 @@ def output_path(args, alertas_dir: Path) -> Path:
     if args.output:
         return Path(args.output).resolve()
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return (alertas_dir / f"comparativo_win_rate_periodos_{ts}.json").resolve()
+    return (alertas_dir / f"comparativo_resumo_insight_card_teams_{ts}.json").resolve()
 
 
 def main():

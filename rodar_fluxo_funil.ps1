@@ -332,14 +332,14 @@ $arquivoItens = Join-Path $entradaDir ("dax_itens_tratado_power_automate_{0}.xls
 
 Write-Host "Convertendo DAX 1..."
 Invoke-Python -PythonExecutable $pythonExe -Arguments @(
-  ".\tratar_dax1_json_power_automate.py",
+  ".\tratar_dax_orcamentos_json_power_automate.py",
   "-i", $dax1Json,
   "-o", $arquivoRuido
 )
 
 Write-Host "Convertendo DAX 2..."
 Invoke-Python -PythonExecutable $pythonExe -Arguments @(
-  ".\tratar_dax2_json_power_automate.py",
+  ".\tratar_dax_itens_json_power_automate.py",
   "-i", $dax2Json,
   "-o", $arquivoItens
 )
@@ -376,8 +376,8 @@ try {
   Invoke-Python -PythonExecutable $pythonExe -Arguments $pipelineArgs
 
   $oportunidadesGerado = Get-LatestFileAfter -Directory ".\historico" -Pattern "oportunidades_reais_auto_*.xlsx" -After $runStep1Start
-  $insightJsonLocal = Join-Path ".\alertas" ("resumo_insight_power_automate_{0}.json" -f $timestamp)
-  $slideResumoUpdaterScript = ".\atualizar_slide_resumo_funil_json.py"
+  $insightJsonLocal = Join-Path ".\alertas" ("resumo_insight_card_teams_{0}.json" -f $timestamp)
+  $slideResumoUpdaterScript = ".\atualizar_dashboard_resumo_insight_js.py"
 
   Write-Host "Gerando JSON de insight..."
   $resumoArgs = @(

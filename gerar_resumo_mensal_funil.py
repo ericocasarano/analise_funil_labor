@@ -22,8 +22,8 @@ from gerar_oportunidades_reais_codes import (
     read_input,
     read_itens,
 )
-from tratar_dax1_json_power_automate import convert_power_automate_json as convert_dax1_json
-from tratar_dax2_json_power_automate import convert_power_automate_json as convert_dax2_json
+from tratar_dax_orcamentos_json_power_automate import convert_power_automate_json as convert_dax1_json
+from tratar_dax_itens_json_power_automate import convert_power_automate_json as convert_dax2_json
 
 
 MONTH_LABELS_PT = {

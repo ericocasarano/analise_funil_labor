@@ -449,14 +449,14 @@ $arquivoItens = Join-Path $entradaDir ("dax_itens_tratado_comparativo_power_auto
 
 Write-Host "Convertendo DAX 1..."
 Invoke-Python -PythonExecutable $pythonExe -Arguments @(
-  ".\tratar_dax1_json_power_automate.py",
+  ".\tratar_dax_orcamentos_json_power_automate.py",
   "-i", $dax1Json,
   "-o", $arquivoRuido
 )
 
 Write-Host "Convertendo DAX 2..."
 Invoke-Python -PythonExecutable $pythonExe -Arguments @(
-  ".\tratar_dax2_json_power_automate.py",
+  ".\tratar_dax_itens_json_power_automate.py",
   "-i", $dax2Json,
   "-o", $arquivoItens
 )
@@ -526,12 +526,12 @@ try {
     "-o", $resumoB
   )
 
-  $comparativoLocal = Join-Path ".\alertas" ("comparativo_win_rate_periodos_{0}.json" -f $timestamp)
-  $slideUpdaterScript = ".\atualizar_slide_win_rate_json.py"
+  $comparativoLocal = Join-Path ".\alertas" ("comparativo_resumo_insight_card_teams_{0}.json" -f $timestamp)
+  $slideUpdaterScript = ".\atualizar_dashboard_comparativo_js.py"
 
   Write-Host "Gerando comparativo consolidado..."
   Invoke-Python -PythonExecutable $pythonExe -Arguments @(
-    ".\gerar_comparativo_win_rate_periodos.py",
+    ".\gerar_comparativo_resumo_insight_periodos.py",
     "--arquivo-a", $resumoA,
     "--arquivo-b", $resumoB,
     "--dias-uteis-a", ([string]$diasUteis),

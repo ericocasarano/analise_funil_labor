@@ -1,110 +1,187 @@
 # Analise Funil
 
 ## Visao Geral
-Esta automacao hoje parte de uma unica extracao do Power Automate e gera 2 saidas da mesma rodada:
+
+Esta automacao parte de uma unica extracao do Power Automate e gera 2 saidas da mesma rodada:
 
 - `Insight Funil`: resumo executivo principal do funil
 - `Comparativo`: comparativo entre periodos com a mesma base da rodada
 - `Resumo Mensal Funil`: consolidado mensal auxiliar para analise historica em modo comercial ou calendario
-- `Painel Aprovacao do Gestor`: painel visual e analise executiva da jornada de revisao do gestor
 
 Regra de ordem da publicacao:
 
 1. primeiro publicar o `Insight Funil`
 2. depois publicar o `Comparativo`
 
-Modo de uso atual:
+No desenho atual da automacao local:
 
-- o Power Automate executa as consultas DAX e grava os JSONs na pasta de extracao
-- a execucao local acontece manualmente, por comando, em `Teste` ou `Producao`
+- `rodar_fluxo_funil.ps1` e o fluxo principal da rodada
+- `rodar_fluxo_comparativo_funil.ps1` gera o comparativo
 
-Observacao sobre os nomes dos scripts:
+Modo de operacao atual:
 
-- o fluxo principal local agora esta em `C:\analise_funil\rodar_fluxo_funil.ps1`
-- ele concentra a execucao principal da rodada antes da etapa comparativa
-- o painel de aprovacao do gestor roda por `C:\analise_funil\rodar_fluxo_aprovacao_gestor.ps1`
+- o Power Automate executa as consultas DAX no Power BI e grava os JSONs na pasta de extracao sincronizada
+- a execucao local dos scripts acontece manualmente, por comando, em `Teste` ou `Producao`
 
-## 1. Fluxo Principal da Rodada
+### Estrategia adotada
+
+A extracao base da rodada vem do Power Automate, com os arquivos JSON gravados na pasta de entrada sincronizada. Beneficios:
+
+- separa a extracao do processamento local
+- permite usar a mesma base para o `Insight Funil` e para o `Comparativo`
+- reduz dependencia de login manual no Power BI para a operacao do dia a dia
+
+## Ambientes
+
+Os envios podem ser separados por ambiente:
+
+### Producao
+
+- Site SharePoint: `https://<seu-tenant>.sharepoint.com/sites/<seu-site>`
+- Pasta resumo: `Documentos\Producao\FunilInsights`
+- Pasta comparativo: `Documentos\Producao\FunilComparativos`
+
+### Teste
+
+- Site SharePoint: `https://<seu-tenant>.sharepoint.com/sites/<seu-site>`
+- Pasta resumo: `Documentos\Teste\FunilInsights_teste`
+- Pasta comparativo: `Documentos\Teste\FunilComparativos_teste`
+
+## 1. Fluxo Principal da Rodada (Insight Funil)
+
 Objetivo: gerar o JSON final do resumo executivo do funil e enviar para a pasta de teste ou producao, de onde o Power Automate publica o Adaptive Card no Teams.
 
-Etapas:
+### O que o fluxo faz
 
-1. O Power Automate executa as consultas DAX no Power BI.
-2. Os arquivos brutos sao salvos na pasta SharePoint `/Entrada/FunilExtracao`.
-3. O PowerShell local le os arquivos mais recentes.
-4. Os dados sao tratados e convertidos.
-5. O pipeline tecnico gera a base consolidada da rodada.
-6. O `Insight Funil` e gerado primeiro.
-7. O JSON do `Insight Funil` e copiado para a pasta final de `Teste` ou `Producao`.
-8. Um fluxo do Power Automate monitora essa pasta final e envia o card ao Teams.
+1. leitura dos arquivos JSON mais recentes gerados pelo Power Automate em `/Entrada/FunilExtracao`
+2. tratamento dos arquivos em `entrada/`
+3. execucao do pipeline Python
+4. geracao do JSON do `Insight Funil`
+5. copia do JSON para a pasta sincronizada do SharePoint / Teams
+6. disparo do Power Automate para postar o Adaptive Card do insight
+7. exibicao do tempo total da rodada
 
-Comportamento padrao do periodo no `Insight Funil`:
+### Arquivos envolvidos
 
-- se `-StartDate` e `-EndDate` nao forem informados, o fluxo principal usa:
-  - inicio = primeiro dia do mes comercial atual
-  - fim = ontem
-- o JSON final do insight separa:
-  - `mes_comercial`
-  - `periodo`
-  - `atualizado_em`
-- a extracao do Power Automate pode conter uma janela mais ampla, mas o card principal considera apenas o recorte efetivo da rodada
+- `rodar_fluxo_funil.ps1`
+- `tratar_dax_orcamentos_json_power_automate.py`
+- `tratar_dax_itens_json_power_automate.py`
+- `automacao_pipeline.py`
+- `gerar_resumo_insight_json.py`
 
-Regra padrao das nao convertidas:
+### Saidas principais
 
-- As analises e rankings de itens consideram, por padrao, orcamentos com `Faturou = 0`, `Aprovado pelo Cliente = 0` e status `Cancelado por Inatividade`, `Orçamento Cancelado` ou `Em confecção`.
-- `Aprovado pelo Cliente` corresponde a coluna `ETAPA 3 FUNIL Aprovados pelo Cliente` da base de oportunidades.
-- O recorte padrao de revisao e `filters.tipo_perda = "todas"`, ou seja, nao filtra `Passou por Revisao Gestor`.
-- Para rodadas especificas, o script de itens ainda aceita `--tipo_perda todas`, `--tipo_perda revisadas` ou `--tipo_perda sem_revisao`.
+- `entrada\dax_orcamentos_tratado_power_automate_YYYYMMDD_HHMMSS.xlsx`
+- `entrada\dax_itens_tratado_power_automate_YYYYMMDD_HHMMSS.xlsx`
+- `historico\oportunidades_reais_auto_YYYYMMDD_HHMMSS.xlsx`
+- `historico\itens_perdas_reais_auto_YYYYMMDD_HHMMSS.xlsx`
+- `alertas\resumo_insight_card_teams_YYYYMMDD_HHMMSS.json`
+- `.ultima_base_funil.json` (na raiz do projeto)
+  - "bilhete" com o caminho exato do DAX1/DAX2 usados nessa rodada
+  - lido pelo `rodar_fluxo_comparativo_funil.ps1` pra garantir que o Comparativo nasca da mesma base (ver Fluxo 2)
+  - nao entra no Git (esta no `.gitignore`), e regenerado a cada rodada
 
-Saida do step 2 (`itens_perdas_reais_auto_*.xlsx`):
+### Regra padrao dos nao convertidos
 
-- `Base_Nao_Convertidas`: orcamentos `Faturou = 0`, `Aprovado pelo Cliente = 0` e status `Cancelado por Inatividade`, `Orçamento Cancelado` ou `Em confecção`, respeitando o recorte de revisao informado.
-- `Itens_Nao_Convertidas`: itens dos orcamentos da base nao convertida.
-- `Base_Faturados` e `Itens_Faturados`: orcamentos com `Faturou = 1`, no mesmo recorte de revisao.
-- Rankings finais por tipo de cliente: `Ranking_Geral_Final`, `Ranking_Geral_Revenda`, `Ranking_Geral_Final_Faturados` e `Ranking_Geral_Revenda_Faturados`.
-- Analise de preco: `Analise_Preco_Itens`.
+Por padrao, o arquivo `historico\itens_perdas_reais_auto_YYYYMMDD_HHMMSS.xlsx` considera orcamentos com `Faturou = 0`, `Aprovado pelo Cliente = 0` e status de recusa/cancelamento, sem filtrar revisao do gestor.
 
-Abas removidas para simplificar a leitura do arquivo:
+No arquivo de oportunidades, `Aprovado pelo Cliente` vem da coluna `ETAPA 3 FUNIL Aprovados pelo Cliente`. Portanto, o padrao do step 2 remove da base de nao convertidas os casos que ja foram aprovados pelo cliente mas ainda nao faturaram.
 
-- `Ranking_Itens_Geral`
-- `Ranking_Itens_Geral_Tipo`
-- `Ranking_NC_Recusa_Tipo`
-- `Ranking_NC_Recusa_Final`
-- `Ranking_NC_Recusa_Revenda`
-- `Ranking_Itens_Tipo_Faturados`
-- `Base_NC_Recusa_Cliente`
-- `Itens_NC_Recusa_Cliente`
-- `Analise_Preco_Recusa`
+Status considerados em `Base_Nao_Convertidas` e `Itens_Nao_Convertidas`:
+
+- `Cancelado por Inatividade`
+- `Orçamento Cancelado`
+- `Em confecção`
+
+A configuracao fica em `automacao_config.json`:
+
+```json
+"filters": {
+  "tipo_perda": "todas"
+}
+```
+
+Opcoes aceitas pelo script de itens nao convertidos: `todas`, `revisadas`, `sem_revisao`.
+
+### Saida detalhada do step 2
+
+O step 2 gera o arquivo `historico\itens_perdas_reais_auto_YYYYMMDD_HHMMSS.xlsx`.
+
+Abas principais:
+
+- `Base_Nao_Convertidas`: orcamentos com `Faturou = 0`, `Aprovado pelo Cliente = 0` e status de recusa/cancelamento, respeitando `tipo_perda`.
+- `Itens_Nao_Convertidas`: itens desses orcamentos.
+- `Base_Faturados`: orcamentos com `Faturou = 1`, no mesmo recorte de revisao.
+- `Itens_Faturados`: itens dos orcamentos faturados.
+
+Rankings mantidos: `Ranking_Geral_Final`, `Ranking_Geral_Revenda`, `Ranking_Geral_Final_Faturados`, `Ranking_Geral_Revenda_Faturados`, `Ranking_Itens_Por_Vendedor`, `Ranking_Itens_Por_Mes`, `Ranking_Itens_Vendedor_Mes`, abas `Top10_<Vendedor>`.
+
+Abas removidas para simplificar o arquivo: `Ranking_Itens_Geral`, `Ranking_Itens_Geral_Tipo`, `Ranking_NC_Recusa_Tipo`, `Ranking_NC_Recusa_Final`, `Ranking_NC_Recusa_Revenda`, `Base_NC_Recusa_Cliente`, `Itens_NC_Recusa_Cliente`, `Analise_Preco_Recusa`, `Ranking_Itens_Tipo_Faturados`.
+
+### Precos e classificacao no step 2
 
 Colunas de preco nos rankings:
 
-- `Preco_Ponderado`: valor total dividido pelo volume total do item.
+- `Preco_Ponderado`: `Valor_Total / Volume_Total`.
 - `Preco_Media_Orcamento`: media dos precos calculados por orcamento.
 - `Preco_Mediana_Orcamento`: mediana dos precos calculados por orcamento.
 
-Na analise de preco, a `Classificacao_Preco` usa a diferenca pela mediana (`Dif_Preco_Mediana_%`) com limite de 3%. A media ponderada permanece disponivel como referencia financeira/volume.
+Na aba `Analise_Preco_Itens`, as mesmas visoes aparecem separadas para faturados e nao convertidos.
 
-Arquivos esperados na extracao:
+A `Classificacao_Preco` usa a mediana por orcamento como referencia principal (limite de 3%):
 
-- `dax1_funil_powerbi_yyyyMMdd_HHmmss.json`
-- `dax2_itens_powerbi_yyyyMMdd_HHmmss.json`
+- `Dif_Preco_Mediana_% >= 3%` e `Win_Rate_Item_% < 50%`: `Possivel sensibilidade a preco`.
+- `Dif_Preco_Mediana_% >= 3%`: `Atencao: preco nao convertido maior`.
+- `Dif_Preco_Mediana_% <= -3%`: `Nao convertido com preco menor`.
+- diferenca entre `-3%` e `+3%`: `Preco similar`.
+- menos de 3 orcamentos faturados ou menos de 3 nao convertidos: `Amostra insuficiente`.
 
-Observacao sobre win rate:
+A media ponderada permanece disponivel como referencia financeira/volume.
+
+### Pipeline tecnico atualmente utilizado
+
+- `step1`: `gerar_oportunidades_reais_codes.py` — consolidacao das oportunidades reais
+- `step2`: `gerar_itens_perdas_reais.py` — nao convertidos e rankings de itens
+
+### Arquivos esperados na extracao
+
+- `dax_query_base_orcamentos_funil_yyyyMMdd_HHmmss.json`
+- `dax_query_base_itens_funil_yyyyMMdd_HHmmss.json`
+
+### Observacao sobre win rate
 
 - o win rate atual do funil continua baseado na `Data de Criacao`
-- o pipeline tambem passa a calcular um win rate adicional por `Data de Faturamento`
+- o pipeline tambem calcula um win rate adicional por `Data de Faturamento`
 - nesse segundo recorte, a data considerada por oportunidade e:
   - `Data de Faturamento`, quando existir
   - `Data de Criacao`, quando a data de faturamento estiver em branco
-- para auditoria desse segundo recorte, o Excel passa a gerar a aba `Lista_WR_Data_Fat`
+- para auditoria desse segundo recorte, o Excel gera a aba `Lista_WR_Data_Fat`
 - `Comparativo_Geral_Total` permanece com a leitura original por data de criacao
 - a leitura adicional fica separada na aba `Comp_Geral_Total_Data_Fat`
 
-Script principal atual:
+### Regra de mes comercial no fluxo principal
 
-- `C:\analise_funil\rodar_fluxo_funil.ps1`
+- o mes comercial fecha no penultimo dia util do mes
+- o dia seguinte ao fechamento passa a pertencer ao mes comercial seguinte
+- o JSON do `Insight Funil` carrega `titulo`, `mes_comercial`, `periodo`, `atualizado_em`
+- isso permite ao Adaptive Card diferenciar o ciclo comercial da rodada da parcela efetivamente analisada ate ontem
 
-Comando de teste:
+### Parametros disponiveis
+
+- `-Ambiente Teste|Producao` — define a pasta sincronizada do SharePoint de destino
+- `-StartDate YYYY-MM-DD` — define a data inicial da extracao
+- `-EndDate YYYY-MM-DD` — define a data final da extracao
+- `-NoSharePoint` — gera o JSON final apenas localmente, sem copiar para a pasta sincronizada
+
+### Comportamento padrao
+
+Se `-StartDate` e `-EndDate` nao forem informados:
+
+- o script usa os arquivos JSON mais recentes disponiveis na pasta de extracao
+- inicio = primeiro dia do mes comercial atual, fim = ontem
+- o `Insight Funil` e gerado somente com esse recorte, mesmo que a extracao contenha uma janela mais ampla para atender o comparativo
+
+### Comandos
 
 ```powershell
 cd C:\analise_funil
@@ -112,59 +189,96 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\rodar_fluxo_funil.ps1 -Ambiente Teste
 ```
 
-Comando de producao:
-
 ```powershell
-cd C:\analise_funil
-Set-ExecutionPolicy -Scope Process Bypass
 .\rodar_fluxo_funil.ps1 -Ambiente Producao
 ```
-
-Comando sem envio ao SharePoint:
 
 ```powershell
 .\rodar_fluxo_funil.ps1 -Ambiente Teste -NoSharePoint
 ```
 
+```powershell
+.\rodar_fluxo_funil.ps1 -Ambiente Teste -StartDate 2026-03-01 -EndDate 2026-03-06
+```
+
 ## 2. Fluxo Comparativo
+
 Objetivo: gerar o JSON comparativo entre 2 periodos e enviar para a pasta final de teste ou producao, de onde o Power Automate publica o card comparativo no Teams.
 
-Etapas:
+### O que o fluxo faz
 
-1. O comparativo usa a mesma base da rodada utilizada pelo `Insight Funil` — garantido por um arquivo
-   `.ultima_base_funil.json` que o fluxo principal grava com o DAX1/DAX2 exatos usados, e que o
-   comparativo le antes de buscar qualquer arquivo (valido por ate 6h; ver detalhes em `AUTOMACAO.md`).
-2. O periodo atual e o periodo anterior proporcional sao recortados a partir dessa base.
-3. Sao gerados 2 resumos independentes.
-4. O script consolida os 2 resumos em um JSON comparativo.
-5. O JSON comparativo e copiado para a pasta final de `Teste` ou `Producao`.
-6. Um fluxo do Power Automate monitora essa pasta final e envia o card comparativo ao Teams.
+1. reaproveita a mesma base da rodada utilizada no `Insight Funil`
+2. calcula o periodo atual e o periodo anterior proporcional
+3. gera 2 resumos independentes
+4. consolida o JSON comparativo
+5. copia o JSON para a pasta sincronizada do SharePoint / Teams
+6. o Power Automate publica o card comparativo no Teams
 
-Comportamento padrao do periodo no `Comparativo`:
+### Arquivos envolvidos
 
-- se `-StartDate` e `-EndDate` nao forem informados, o `Periodo Atual` usa:
-  - inicio = primeiro dia do mes comercial atual
-  - fim = ontem
-- o `Periodo Anterior` usa:
-  - inicio = primeiro dia do mes comercial anterior
-  - fim = mesma quantidade de dias uteis observados no periodo atual, dentro do mes comercial anterior
-- o JSON comparativo separa:
-  - `periodo_a.label`
-  - `periodo_a.dias_uteis`
-  - `periodo_b.label`
-  - `periodo_b.dias_uteis`
-  - `atualizado_em`
+- `rodar_fluxo_comparativo_funil.ps1`
+- `gerar_comparativo_resumo_insight_periodos.py`
+- `gerar_resumo_insight_json.py`
 
-Observacao sobre nao convertidas no comparativo:
+### Regra operacional
 
-- Quando o comparativo executa o pipeline auxiliar, ele tambem respeita a regra padrao de nao convertidas: `Faturou = 0`, `Aprovado pelo Cliente = 0`, status de recusa/cancelamento e `tipo_perda = todas`.
-- A troca entre `Teste` e `Producao` muda apenas o destino de publicacao; a regra de calculo continua a mesma.
+O comparativo deve ser gerado e publicado sempre depois do `Insight Funil`.
 
-Script principal:
+### Reaproveitamento real da base
 
-- `C:\analise_funil\rodar_fluxo_comparativo_funil.ps1`
+Ate pouco tempo atras, cada fluxo (`rodar_fluxo_funil.ps1` e `rodar_fluxo_comparativo_funil.ps1`) buscava
+o "arquivo mais recente" na pasta de extracao de forma **independente**, no momento exato em que cada um
+rodava. Isso causava uma divergencia real: se o Power Automate atualizasse a extracao entre uma rodada e
+outra (ex.: rodar o Insight as 08:28 e o Comparativo as 08:39), os dois cards do Teams mostravam numeros
+diferentes pro "periodo atual", mesmo com o rotulo do periodo identico.
 
-Comando de teste:
+Isso foi corrigido:
+
+1. `rodar_fluxo_funil.ps1`, depois de escolher o DAX1/DAX2 da rodada, grava um arquivo `.ultima_base_funil.json`
+   na raiz do projeto com o caminho exato desses dois arquivos e o timestamp da rodada.
+2. `rodar_fluxo_comparativo_funil.ps1`, antes de buscar o DAX1/DAX2, tenta ler esse "bilhete":
+   - se existir, tiver no maximo 6 horas e os arquivos referenciados ainda existirem, usa exatamente
+     os mesmos arquivos que o Insight Funil usou na ultima rodada (aparece no console:
+     `Reaproveitando a mesma base do Insight Funil (rodada de ...)`);
+   - se nao existir, estiver velho ou os arquivos tiverem sumido, cai no comportamento antigo
+     (busca o arquivo mais recente na pasta de extracao).
+
+Na pratica, isso garante que **Insight Funil e Comparativo nascam sempre da mesma base**, desde que o
+Comparativo rode logo depois do Insight Funil (dentro da mesma janela de 6h) — o que ja e a ordem de
+publicacao recomendada.
+
+### Observacao sobre nao convertidas no comparativo
+
+Quando o comparativo executa o pipeline auxiliar, ele tambem respeita a regra padrao de nao convertidas: `Faturou = 0`, `Aprovado pelo Cliente = 0`, status de recusa/cancelamento e `tipo_perda = todas`. A troca entre `Teste` e `Producao` muda apenas o destino de publicacao; a regra de calculo continua a mesma.
+
+### Regra de mes comercial no comparativo
+
+- o comparativo usa a mesma logica de mes comercial do fluxo principal
+- o `Periodo Atual` nasce do mes comercial atual, o `Periodo Anterior` nasce do mes comercial anterior
+- a equivalencia entre os periodos e feita pela mesma quantidade de dias uteis observados
+- o JSON comparativo carrega `comparativo.periodo_a.label`, `comparativo.periodo_a.dias_uteis`, `comparativo.periodo_b.label`, `comparativo.periodo_b.dias_uteis`, `atualizado_em`
+- o campo `mes_comercial` tambem e gerado nos resumos-base e no JSON comparativo, mesmo que nao precise ser exibido no card final
+
+### Regra de dias uteis no comparativo
+
+O script considera automaticamente: sabados, domingos, feriados nacionais do Brasil e Sexta-feira Santa.
+
+### Parametros disponiveis
+
+- `-Ambiente Teste|Producao` — define a pasta sincronizada do SharePoint de destino
+- `-StartDate YYYY-MM-DD` — opcional; define o inicio do periodo atual
+- `-EndDate YYYY-MM-DD` — opcional; define o fim do periodo atual
+- `-NoPublicarComparativo` — gera os arquivos localmente, mas nao copia o comparativo para a pasta sincronizada
+
+### Comportamento padrao
+
+Se `-StartDate` e `-EndDate` nao forem informados:
+
+- inicio = primeiro dia do mes comercial atual, fim = ontem
+- `Periodo Atual` = mes comercial atual ate ontem
+- `Periodo Anterior` = periodo equivalente dentro do mes comercial anterior, com a mesma quantidade de dias uteis observados no periodo atual
+
+### Comandos
 
 ```powershell
 cd C:\analise_funil
@@ -172,44 +286,20 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\rodar_fluxo_comparativo_funil.ps1 -Ambiente Teste
 ```
 
-Comando de producao:
-
 ```powershell
-cd C:\analise_funil
-Set-ExecutionPolicy -Scope Process Bypass
 .\rodar_fluxo_comparativo_funil.ps1 -Ambiente Producao
 ```
 
-## 3. Painel de Aprovacao do Gestor
-Objetivo: gerar a analise executiva da jornada de revisao do gestor (Excel + JSON) e atualizar o
-dashboard HTML interativo, local e publicado.
-
-Comando usado no dia a dia:
-
 ```powershell
-cd C:\analise_funil
-Set-ExecutionPolicy -Scope Process Bypass
-.\rodar_fluxo_aprovacao_gestor.ps1 -UsarBloco3 -Visao com_ruido
+.\rodar_fluxo_comparativo_funil.ps1 -Ambiente Teste -StartDate 2026-04-01 -EndDate 2026-04-07
 ```
 
-Etapas:
+```powershell
+.\rodar_fluxo_comparativo_funil.ps1 -Ambiente Teste -NoPublicarComparativo
+```
 
-1. le os JSONs mais recentes de `/Entrada/FunilExtracao` (e de `/Entrada/OrcamentosRevisadosExtracao`
-   quando `-UsarBloco3` e usado).
-2. converte e trata os arquivos em `entrada/`.
-3. monta a analise (Excel em `historico/`, JSON em `alertas/`).
-4. atualiza o slide HTML local (`Slide de Win Rate Interativo\data\aprovacao_gestor_latest.js`).
-5. publica uma copia desse `.js` na pasta do SharePoint (`Producao\StaticWebApp`), que alimenta a
-   versao publica do painel — a menos que `-NoPublicar` seja informado.
+## 3. Fluxos Power Automate
 
-Link publico (dados so carregam pra quem estiver logado na conta Microsoft da empresa):
-
-`https://ericocasarano.github.io/trilha-aprovacao-orcamentos-labor/`
-
-Documentacao completa (parametros, `-UsarBloco3`, como funciona a publicacao no GitHub Pages) esta em
-`AUTOMACAO.md`, secao "Fluxo 3. Painel de Aprovacao do Gestor" e "Publicacao publica (GitHub Pages)".
-
-## 4. Fluxos Power Automate
 Recomendacao de organizacao:
 
 - `Fluxo 1 - Extracao DAX Power BI`
@@ -222,173 +312,147 @@ Recomendacao de organizacao:
 - `Fluxo 3 - Publicacao Comparativo`
   Funcao: monitorar a pasta final de comparativo e postar o Adaptive Card comparativo no Teams.
 
-## 5. Resumo Mensal Auxiliar
+## 4. Resumo Mensal Historico (auxiliar)
+
 Objetivo: gerar uma planilha mensal historica com os mesmos conceitos de remocao de ruido usados no funil principal, sem depender do Excel consolidado da rodada.
 
-Script principal:
+### O que o fluxo faz
 
-- `C:\analise_funil\gerar_resumo_mensal_funil.py`
+1. le os arquivos DAX1 e DAX2 diretamente em `json` ou em base tratada
+2. aplica a mesma logica de remocao de ruido do `gerar_oportunidades_reais_codes.py`
+3. consolida os indicadores `Sem Ruído` por linha mensal
+4. permite gerar a visao por mes comercial ou por mes calendario
+5. grava a saida em um Excel historico auxiliar
 
-Compatibilidade:
+### Arquivos envolvidos
 
-- `C:\analise_funil\gerar_resumo_mensal_comercial.py`
-  - nome antigo mantido como atalho para o script principal atual
+- `gerar_resumo_mensal_funil.py` (script principal)
+- `gerar_resumo_mensal_comercial.py` — nome antigo mantido como atalho para compatibilidade
 
-Entradas aceitas:
+### Saida principal
 
-- `dax1_funil_powerbi_*.json` e `dax2_itens_powerbi_*.json` diretamente da pasta de extracao
-- arquivos tratados em `xlsx/xls/csv`
+- `historico\resumo_mensal_funil_YYYYMMDD_HHMMSS.xlsx`, aba `Resumo_Mensal_Funil`, com as colunas:
+  `Mês/Ano Comercial`, `Periodo`, `Enviados_Qtd (Sem Ruído)`, `Enviados_Valor (Sem Ruído)`, `Faturado_Qtd (Sem Ruído)`, `Faturado_Valor (Sem Ruído)`, `Nao_Convertidas_Qtd (Sem Ruído)`, `Nao_Convertidas_Valor (Sem Ruído)`, `Win Rate (Volume) % (Sem Ruído)`, `Win Rate (Valor) % (Sem Ruído)`.
 
-Saida:
+### Modos disponiveis
 
-- `historico\resumo_mensal_funil_YYYYMMDD_HHMMSS.xlsx`
-  - aba `Resumo_Mensal_Funil`
+- `comercial` — padrao do script; cada linha representa um ciclo comercial
+- `calendario` — ativado com `--modo calendario`; cada linha representa um mes calendario civil
 
-Colunas geradas:
+### Regras importantes
 
-- `Mês/Ano Comercial`
-- `Periodo`
-- `Enviados_Qtd (Sem Ruído)`
-- `Enviados_Valor (Sem Ruído)`
-- `Faturado_Qtd (Sem Ruído)`
-- `Faturado_Valor (Sem Ruído)`
-- `Nao_Convertidas_Qtd (Sem Ruído)`
-- `Nao_Convertidas_Valor (Sem Ruído)`
-- `Win Rate (Volume) % (Sem Ruído)`
-- `Win Rate (Valor) % (Sem Ruído)`
+- `--start` e `--end` limitam a janela total da base analisada
+- `--modo` define se a agregacao de cada linha sera comercial ou calendario
+- quando a base nao cobre o ciclo inteiro, o script mantem a linha e informa no console os meses parciais
+- para o primeiro mes comercial sair completo, a extracao deve comecar antes do inicio do mes alvo
+  - ex.: para analisar `Jun/25 a Nov/25` em modo comercial, a extracao deve comecar em `01/05/2025`
+  - ex.: para analisar `Dez/25 a Abr/26` em modo comercial, a extracao deve comecar em `01/11/2025`
 
-Modos disponiveis:
-
-- `comercial`
-  - modo padrao
-  - cada linha representa um mes comercial
-- `calendario`
-  - ativado com `--modo calendario`
-  - cada linha representa um mes calendario civil
-
-Observacao sobre meses parciais:
-
-- quando a base informada nao cobre o ciclo inteiro, o script mantem a linha e informa no console quais meses ficaram parciais
-- isso costuma acontecer no primeiro mes da janela e no ultimo mes em andamento
-
-Exemplo de mes calendario:
+### Exemplos de uso
 
 ```powershell
 cd C:\analise_funil
 py -3.12 .\gerar_resumo_mensal_funil.py -i ".\entrada\dax1_jan_maio.xlsx" -it ".\entrada\dax2_jan_maio.xlsx" --modo calendario --start 2026-04-01 --end 2026-04-30 -o resumo_calendario_abril
 ```
 
-Exemplo de mes comercial:
-
 ```powershell
-cd C:\analise_funil
 py -3.12 .\gerar_resumo_mensal_funil.py -i ".\entrada\dax1_jan_maio.xlsx" -it ".\entrada\dax2_jan_maio.xlsx" --start 2026-03-31 --end 2026-04-29 -o resumo_comercial_abril
 ```
 
-Exemplo usando os JSONs mais recentes da pasta de extracao:
+Usando os JSONs mais recentes da pasta de extracao:
 
 ```powershell
 cd C:\analise_funil
 $jsonDir = "C:\CAMINHO\PARA\Entrada\FunilExtracao"
-$dax1 = Get-ChildItem -LiteralPath $jsonDir -Filter "dax1_funil_powerbi_*.json" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$dax2 = Get-ChildItem -LiteralPath $jsonDir -Filter "dax2_itens_powerbi_*.json" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$dax1 = Get-ChildItem -LiteralPath $jsonDir -Filter "dax_query_base_orcamentos_funil_*.json" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$dax2 = Get-ChildItem -LiteralPath $jsonDir -Filter "dax_query_base_itens_funil_*.json" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 py -3.12 .\gerar_resumo_mensal_funil.py -i $dax1.FullName -it $dax2.FullName --modo calendario --start 2025-12-01 --end 2026-04-30 -o resumo_calendario_dez_abr
 ```
 
-## 6. Estrutura de Pastas
+## 5. Estrutura de Pastas
+
 Sugestao de organizacao:
 
-- Entrada bruta:
-  `/Entrada/FunilExtracao`
+- Entrada bruta: `/Entrada/FunilExtracao`
+- Saida insight teste: pasta configurada em `insight_json_dir` do ambiente `Teste`
+- Saida insight producao: pasta configurada em `insight_json_dir` do ambiente `Producao`
+- Saida comparativo teste: pasta configurada em `comparativo_json_dir` do ambiente `Teste`
+- Saida comparativo producao: pasta configurada em `comparativo_json_dir` do ambiente `Producao`
 
-- Saida insight teste:
-  pasta configurada em `insight_json_dir` do ambiente `Teste`
+## 6. Regra de Uso
 
-- Saida insight producao:
-  pasta configurada em `insight_json_dir` do ambiente `Producao`
-
-- Saida comparativo teste:
-  pasta configurada em `comparativo_json_dir` do ambiente `Teste`
-
-- Saida comparativo producao:
-  pasta configurada em `comparativo_json_dir` do ambiente `Producao`
-
-## 7. Regra de Uso
-Use assim:
-
-- `rodar_fluxo_funil.ps1`
-  Quando quiser executar a rodada principal do funil e gerar o `Insight Funil`
-
-- `rodar_fluxo_comparativo_funil.ps1`
-  Quando quiser gerar o comparativo depois da rodada principal
-
-- `rodar_fluxo_aprovacao_gestor.ps1`
-  Quando quiser atualizar o painel de Aprovacao do Gestor (local e publicado)
-
-- `gerar_resumo_mensal_funil.py`
-  Quando quiser gerar uma visao historica mensal auxiliar da base, em mes comercial ou calendario
+- `rodar_fluxo_funil.ps1` — quando quiser executar a rodada principal do funil e gerar o `Insight Funil`
+- `rodar_fluxo_comparativo_funil.ps1` — quando quiser gerar o comparativo depois da rodada principal
+- `gerar_resumo_mensal_funil.py` — quando quiser gerar uma visao historica mensal auxiliar da base, em mes comercial ou calendario
 
 Observacao operacional:
 
-- hoje o uso previsto e manual
-- primeiro rode o `Insight Funil`
-- depois rode o `Comparativo`
+- hoje o uso previsto e manual; primeiro rode o `Insight Funil`, depois rode o `Comparativo`
 - a extracao base ja deve ter sido gerada pelo Power Automate antes dos comandos locais
-- no modo padrao:
-  - o `Insight Funil` considera mes comercial atual ate ontem
-  - o `Comparativo` considera mes comercial atual ate ontem versus periodo equivalente do mes comercial anterior por dias uteis
-  - o `Resumo Mensal Funil` usa o modo `comercial`, salvo quando `--modo calendario` for informado
+- no modo padrao: `Insight Funil` considera mes comercial atual ate ontem; `Comparativo` considera mes comercial atual ate ontem versus periodo equivalente do mes comercial anterior por dias uteis; `Resumo Mensal Funil` usa o modo `comercial`, salvo quando `--modo calendario` for informado
 
 Observacao sobre leitura temporal nos cards:
 
-- no `Insight Funil`, o card mostra:
-  - `Mes Comercial`
-  - `Periodo analisado`
-  - `Atualizado em`
-- no `Comparativo`, o card mostra:
-  - `Periodo Anterior`
-  - `Periodo Atual`
-  - `Atualizado em`
+- no `Insight Funil`, o card mostra: `Mes Comercial`, `Periodo analisado`, `Atualizado em`
+- no `Comparativo`, o card mostra: `Periodo Anterior`, `Periodo Atual`, `Atualizado em`
 
-## 8. Resumo Operacional
-Insight Funil em teste:
+## 7. Resumo Operacional
 
 ```powershell
 .\rodar_fluxo_funil.ps1 -Ambiente Teste
-```
-
-Insight Funil em producao:
-
-```powershell
 .\rodar_fluxo_funil.ps1 -Ambiente Producao
-```
 
-Comparativo teste:
-
-```powershell
 .\rodar_fluxo_comparativo_funil.ps1 -Ambiente Teste
-```
-
-Comparativo producao:
-
-```powershell
 .\rodar_fluxo_comparativo_funil.ps1 -Ambiente Producao
-```
 
-Painel de Aprovacao do Gestor:
-
-```powershell
-.\rodar_fluxo_aprovacao_gestor.ps1 -UsarBloco3 -Visao com_ruido
-```
-
-Resumo mensal em mes calendario:
-
-```powershell
 .\gerar_resumo_mensal_funil.py -i ".\entrada\dax1_jan_maio.xlsx" -it ".\entrada\dax2_jan_maio.xlsx" --modo calendario --start 2026-04-01 --end 2026-04-30 -o resumo_calendario_abril
-```
-
-Resumo mensal em mes comercial:
-
-```powershell
 .\gerar_resumo_mensal_funil.py -i ".\entrada\dax1_jan_maio.xlsx" -it ".\entrada\dax2_jan_maio.xlsx" --start 2026-03-31 --end 2026-04-29 -o resumo_comercial_abril
 ```
+
+## 8. Integracao com o Power Automate
+
+O PowerShell do `Insight Funil`:
+
+1. gera `resumo_insight_card_teams_...json`
+2. copia esse JSON para a pasta sincronizada correta
+3. deixa o Power Automate assumir a postagem no Teams
+
+O PowerShell do `Comparativo`:
+
+1. gera os dois resumos localmente
+2. monta `comparativo_resumo_insight_card_teams_...json`
+3. copia o comparativo para a pasta sincronizada correta
+4. deixa o Power Automate assumir a postagem no Teams
+
+## 9. Publicando uma mudanca de codigo
+
+Depois de editar qualquer arquivo do projeto:
+
+```bash
+cd C:\analise_funil
+git status
+git add nome_do_arquivo
+git commit -m "Descricao da mudanca"
+git push -u origin main
+```
+
+Antes de commitar, vale checar que nao vazou nada sensivel:
+
+```bash
+git diff --cached --name-only -z | xargs -0 grep -lI "erico.moraes\|BUNZL"
+```
+
+## 10. Observacoes importantes
+
+- hoje a operacao normal nao depende de login manual no Power BI, porque a extracao base vem do Power Automate
+- a postagem no Teams hoje acontece via Power Automate
+- o fluxo de resumo e o fluxo comparativo podem apontar para canais diferentes no Teams
+- o comparativo automatico usa dias uteis automaticamente no modo padrao
+- a extracao do Power Automate hoje pode trazer uma janela ampliada para atender resumo e comparativo na mesma rodada, mas o recorte efetivo de cada card e definido pelos scripts locais
+- no fim de cada rodada os scripts exibem os principais arquivos gerados
+- desde a correcao do `.ultima_base_funil.json`, o Insight Funil e o Comparativo sempre nascem da mesma
+  base de extracao (contanto que o Comparativo rode ate 6h depois do Insight Funil)
+- a identidade do Git usada nos commits deve ser `Erico Casarano <erico.casarano@exemplo.com>` — se um
+  commit sair com outro autor (ex.: e-mail corporativo real), corrija antes de publicar
+  (`git commit --amend --author="Erico Casarano <erico.casarano@exemplo.com>"`, so em commits ainda nao
+  enviados ao GitHub)

@@ -7,12 +7,12 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 ALERTAS_DIR = BASE_DIR / "alertas"
-DEFAULT_OUTPUT = BASE_DIR / "Slide de Win Rate Interativo" / "data" / "comparativo_latest.js"
+DEFAULT_OUTPUT = BASE_DIR / "Dashboard Analise Funil" / "data" / "comparativo_dashboard.js"
 
 
 def find_latest_json() -> Path:
     arquivos = sorted(
-        ALERTAS_DIR.glob("comparativo_win_rate_periodos_*.json"),
+        ALERTAS_DIR.glob("comparativo_resumo_insight_card_teams_*.json"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )

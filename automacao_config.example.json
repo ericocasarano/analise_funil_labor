@@ -1,21 +1,9 @@
 
 {
   "python_executable": "py -3.12",
-  "power_bi": {
-    "tenant_id": "SEU_TENANT_ID",
-    "workspace_name": "Nome do Workspace no Power BI",
-    "workspace_id": "SEU_WORKSPACE_ID",
-    "dataset_name": "Nome do Dataset",
-    "dataset_id": "SEU_DATASET_ID",
-    "output_dir": "./entrada",
-    "dax1_path": "./dax/dax1_funil_conversao.dax",
-    "dax2_path": "./dax/dax2_itens_orcamento.dax"
-  },
   "paths": {
     "history_dir": "./historico",
-    "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao",
-    "bloco3_json_dir": "C:\\CAMINHO\\PARA\\Entrada\\OrcamentosRevisadosExtracao",
-    "aprovacao_gestor_publish_dir": "C:\\CAMINHO\\PARA\\Producao\\StaticWebApp"
+    "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao"
   },
   "scripts": {
     "step1": "./gerar_oportunidades_reais_codes.py",

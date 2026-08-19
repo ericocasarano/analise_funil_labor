@@ -6,7 +6,7 @@ graficos/
 .run_guard/
 
 # Snapshot de dados consumido pelo dashboard (regenerado a cada rodada)
-Slide de Win Rate Interativo/data/*.js
+Dashboard Analise Funil/data/*.js
 
 # Python
 __pycache__/
