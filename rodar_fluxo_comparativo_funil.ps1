@@ -1,8 +1,8 @@
 param(
   [string]$Config = ".\automacao_config.json",
   [string]$JsonDir = "",
-  [string]$Dax1Pattern = "dax1_funil_powerbi_*.json",
-  [string]$Dax2Pattern = "dax2_itens_powerbi_*.json",
+  [string]$Dax1Pattern = "dax_query_base_orcamentos_funil_*.json",
+  [string]$Dax2Pattern = "dax_query_base_itens_funil_*.json",
   [switch]$SkipLogin,
   [ValidateSet("Teste", "Producao")]
   [string]$Ambiente = "Teste",
