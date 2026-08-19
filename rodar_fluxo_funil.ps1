@@ -314,6 +314,14 @@ $dax2Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax2Pattern
 Write-Host "JSON DAX 1:" $dax1Json
 Write-Host "JSON DAX 2:" $dax2Json
 
+$baseMarker = @{
+  dax1 = $dax1Json
+  dax2 = $dax2Json
+  timestamp = (Get-Date).ToString("s")
+  ambiente = $Ambiente
+}
+$baseMarker | ConvertTo-Json | Set-Content -Path ".\.ultima_base_funil.json" -Encoding UTF8
+
 $entradaDir = ".\entrada"
 if (-not (Test-Path $entradaDir)) {
   New-Item -ItemType Directory -Path $entradaDir | Out-Null

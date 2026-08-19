@@ -15,6 +15,9 @@ __pycache__/
 # Excel lock files temporarios
 ~$*.xlsx
 
+# Bilhete com a ultima base usada pelo fluxo principal (consumido pelo comparativo)
+.ultima_base_funil.json
+
 # Configuracao com segredos (webhook, IDs) - usar automacao_config.example.json como base
 automacao_config.json
 

@@ -413,8 +413,28 @@ if ($configObj.alerts.environments -and $configObj.alerts.environments.$ambiente
   $comparativoJsonDir = $configObj.alerts.environments.$ambienteKey.comparativo_json_dir
 }
 
-$dax1Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax1Pattern
-$dax2Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax2Pattern
+$dax1Json = $null
+$dax2Json = $null
+$baseMarkerPath = ".\.ultima_base_funil.json"
+if (Test-Path $baseMarkerPath) {
+  try {
+    $baseMarker = Get-Content $baseMarkerPath -Raw | ConvertFrom-Json
+    $markerAge = (Get-Date) - [datetime]$baseMarker.timestamp
+    if ($markerAge.TotalHours -le 6 -and (Test-Path $baseMarker.dax1) -and (Test-Path $baseMarker.dax2)) {
+      $dax1Json = $baseMarker.dax1
+      $dax2Json = $baseMarker.dax2
+      Write-Host "Reaproveitando a mesma base do Insight Funil (rodada de $($baseMarker.timestamp))."
+    }
+  }
+  catch {
+    Write-Host "Nao foi possivel ler .ultima_base_funil.json. Buscando arquivo mais recente."
+  }
+}
+if (-not $dax1Json -or -not $dax2Json) {
+  Write-Host "Nenhuma base recente do Insight Funil encontrada. Buscando o arquivo mais recente diretamente."
+  $dax1Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax1Pattern
+  $dax2Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax2Pattern
+}
 
 Write-Host "JSON DAX 1:" $dax1Json
 Write-Host "JSON DAX 2:" $dax2Json
