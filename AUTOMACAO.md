@@ -10,7 +10,8 @@ O projeto hoje possui dois fluxos principais:
 Além deles, o projeto agora possui:
 
 - um script auxiliar para gerar consolidacoes mensais historicas com a mesma logica de remocao de ruido do funil
-- um fluxo dedicado ao painel de aprovacao do gestor
+- um fluxo dedicado ao painel de aprovacao do gestor, que tambem tem uma versao publicada com link
+  publico (GitHub Pages) — ver secao "Publicacao publica (GitHub Pages)" mais abaixo
 
 Ambos devem partir da mesma rodada de extracao e seguir a ordem de publicacao abaixo:
 
@@ -54,6 +55,7 @@ Configuracao atual:
 - Site SharePoint: `https://bunzlbr.sharepoint.com/sites/InsightsVendas`
 - Pasta resumo: `Documentos\Producao\FunilInsights`
 - Pasta comparativo: `Documentos\Producao\FunilComparativos`
+- Pasta do painel de Aprovacao do Gestor (publicado no GitHub Pages): `Documentos\Producao\StaticWebApp`
 
 ### Teste
 
@@ -88,6 +90,10 @@ Configuracao atual:
 - `historico\oportunidades_reais_auto_YYYYMMDD_HHMMSS.xlsx`
 - `historico\itens_perdas_reais_auto_YYYYMMDD_HHMMSS.xlsx`
 - `alertas\resumo_insight_power_automate_YYYYMMDD_HHMMSS.json`
+- `.ultima_base_funil.json` (na raiz do projeto)
+  - "bilhete" com o caminho exato do DAX1/DAX2 usados nessa rodada
+  - lido pelo `rodar_fluxo_comparativo_funil.ps1` pra garantir que o Comparativo nasca da mesma base (ver Fluxo 2)
+  - nao entra no Git (esta no `.gitignore`), e regenerado a cada rodada
 
 ### Regra padrao dos nao convertidos
 
@@ -266,8 +272,30 @@ Se `-StartDate` e `-EndDate` nao forem informados:
 ### Regra operacional
 
 - o comparativo deve ser gerado depois do `Insight Funil`
-- a ideia alvo e que ele reutilize a mesma base da rodada, evitando nova extracao
 - a publicacao do comparativo deve ocorrer sempre depois da publicacao do `Insight Funil`
+
+### Reaproveitamento real da base (corrigido)
+
+Ate pouco tempo atras, cada fluxo (`rodar_fluxo_funil.ps1` e `rodar_fluxo_comparativo_funil.ps1`) buscava
+o "arquivo mais recente" na pasta de extracao de forma **independente**, no momento exato em que cada um
+rodava. Isso causava uma divergencia real: se o Power Automate atualizasse a extracao entre uma rodada e
+outra (ex.: rodar o Insight as 08:28 e o Comparativo as 08:39), os dois cards do Teams mostravam numeros
+diferentes pro "periodo atual", mesmo com o rotulo do periodo identico.
+
+Isso foi corrigido:
+
+1. `rodar_fluxo_funil.ps1`, depois de escolher o DAX1/DAX2 da rodada, grava um arquivo `.ultima_base_funil.json`
+   na raiz do projeto com o caminho exato desses dois arquivos e o timestamp da rodada.
+2. `rodar_fluxo_comparativo_funil.ps1`, antes de buscar o DAX1/DAX2, tenta ler esse "bilhete":
+   - se existir, tiver no maximo 6 horas e os arquivos referenciados ainda existirem, usa exatamente
+     os mesmos arquivos que o Insight Funil usou na ultima rodada (aparece no console:
+     `Reaproveitando a mesma base do Insight Funil (rodada de ...)`);
+   - se nao existir, estiver velho ou os arquivos tiverem sumido, cai no comportamento antigo
+     (busca o arquivo mais recente na pasta de extracao).
+
+Na pratica, isso garante que **Insight Funil e Comparativo nascam sempre da mesma base**, desde que o
+Comparativo rode logo depois do Insight Funil (dentro da mesma janela de 6h) — o que ja e a ordem de
+publicacao recomendada.
 
 ### Comando padrao em teste
 
@@ -326,11 +354,14 @@ Se `-StartDate` e `-EndDate` nao forem informados:
 
 ### O que o fluxo faz
 
-1. le os JSONs mais recentes da pasta sincronizada `/Entrada/FunilExtracao`
-2. converte DAX 1 e DAX 2 para arquivos tratados em `entrada/`
+1. le os JSONs mais recentes da pasta sincronizada `/Entrada/FunilExtracao` (Bloco 1/DAX2) e, se `-UsarBloco3`
+   for usado, da pasta `/Entrada/OrcamentosRevisadosExtracao` (Bloco 2/Bloco 3)
+2. converte os JSONs brutos para arquivos tratados em `entrada/`
 3. gera ou reaproveita a base de oportunidades
 4. monta a analise de aprovacao do gestor em Excel e JSON
-5. atualiza o arquivo do slide HTML interativo
+5. atualiza o arquivo do slide HTML interativo local
+6. publica a copia do slide na pasta do SharePoint (`Producao\StaticWebApp`), que alimenta a versao
+   publica no GitHub Pages (ver secao "Publicacao publica" mais abaixo)
 
 ### Arquivos envolvidos
 
@@ -340,6 +371,32 @@ Se `-StartDate` e `-EndDate` nao forem informados:
 - `automacao_pipeline.py`
 - `gerar_analise_aprovacao_gestor.py`
 - `atualizar_slide_aprovacao_gestor_json.py`
+
+### Blocos de extracao (`-UsarBloco3`)
+
+O painel pode usar duas fontes diferentes pra base "com ruido" (DAX1):
+
+- **sem `-UsarBloco3`** (padrao): usa `Entrada\FunilExtracao\dax1_funil_powerbi_*.json` — a mesma extracao
+  do fluxo principal do funil.
+- **com `-UsarBloco3`**: usa `Entrada\OrcamentosRevisadosExtracao\bloco3_aprovacao_cliente_*.json` no lugar
+  do DAX1, e adicionalmente le `Entrada\OrcamentosRevisadosExtracao\bloco2_revisao_gestor_*.json` (usado
+  so pra calcular os KPIs de revisao: `qtd_orcamentos_com_revisao`, `qtd_revisoes_total`,
+  `media_revisoes_por_orcamento`, e o total de revisoes por vendedor na tabela executiva).
+
+> **Nao confirmado oficialmente**: pelo nome dos arquivos e como o codigo usa cada um, "Bloco 2" parece ser
+> os dados de revisao do gestor e "Bloco 3" os dados pos-aprovacao do cliente — mas isso foi inferido lendo
+> o codigo e os arquivos, nao documentado por quem desenhou esse fluxo no Power Automate. Nao existe
+> "Bloco 1" no codigo (o nome nao aparece em nenhum parametro). Vale confirmar com quem montou a extracao
+> `OrcamentosRevisadosExtracao` o que cada bloco representa de fato. O DAX2 (itens) sempre vem de
+> `FunilExtracao`, independente de `-UsarBloco3`.
+
+O comando usado hoje no dia a dia e:
+
+```powershell
+cd C:\analise_funil
+Set-ExecutionPolicy -Scope Process Bypass
+.\rodar_fluxo_aprovacao_gestor.ps1 -UsarBloco3 -Visao com_ruido
+```
 
 ### Regra de visao
 
@@ -355,9 +412,46 @@ Se `-StartDate` e `-EndDate` nao forem informados:
 
 - `entrada\dax1_remocao_ruidos_aprovacao_gestor_YYYYMMDD_HHMMSS.xlsx`
 - `entrada\dax2_itens_orcamento_aprovacao_gestor_YYYYMMDD_HHMMSS.xlsx`
+- `entrada\bloco2_revisao_gestor_aprovacao_gestor_YYYYMMDD_HHMMSS.xlsx` (so com `-UsarBloco3`)
 - `historico\analise_aprovacao_gestor_YYYYMMDD_HHMMSS.xlsx`
 - `alertas\analise_aprovacao_gestor_YYYYMMDD_HHMMSS.json`
-- `Slide de Win Rate Interativo\data\aprovacao_gestor_latest.js`
+- `Slide de Win Rate Interativo\data\aprovacao_gestor_latest.js` (versao local)
+- copia publicada em `paths.aprovacao_gestor_publish_dir` (pasta do SharePoint), a menos que `-NoPublicar`
+  seja informado
+
+### Parametros do painel
+
+- `-UsarBloco3`
+  - troca a fonte do DAX1 pelo Bloco 3 e ativa a leitura do Bloco 2 (ver secao acima)
+- `-Visao com_ruido|sem_ruido`
+  - `com_ruido` (padrao): nao gera oportunidades reais automaticamente
+  - `sem_ruido`: gera (ou reaproveita, via `-Oportunidades`) a base sem ruido
+- `-Oportunidades <caminho>`
+  - usa um arquivo de oportunidades reais ja pronto, em vez de gerar um novo
+- `-NoPublicar`
+  - atualiza o slide so localmente, sem copiar pra pasta do SharePoint
+- `-JsonDir` / `-Bloco3JsonDir`
+  - opcionais; se omitidos, usam `paths.json_dir` / `paths.bloco3_json_dir` do `automacao_config.json`
+- `-ForceRun`
+  - ignora a trava de duplicidade (usa quando quiser forcar uma rodada nova mesmo tendo rodado a
+    mesma combinacao de visao/oportunidades/bloco3 ha poucos minutos)
+
+### Configuracao necessaria (`automacao_config.json`)
+
+Esses caminhos nao ficam mais fixos no `.ps1` (eram valores com usuario/pasta local hardcoded antes) —
+agora vem do `automacao_config.json`, em `paths`:
+
+```json
+"paths": {
+  "history_dir": "./historico",
+  "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao",
+  "bloco3_json_dir": "C:\\CAMINHO\\PARA\\Entrada\\OrcamentosRevisadosExtracao",
+  "aprovacao_gestor_publish_dir": "C:\\CAMINHO\\PARA\\Producao\\StaticWebApp"
+}
+```
+
+O `automacao_config.example.json` (versionado no Git) tem essa mesma estrutura com placeholders, pra
+servir de modelo caso o `automacao_config.json` real precise ser recriado.
 
 ### Comando padrao com ruido
 
@@ -419,7 +513,68 @@ O script considera automaticamente:
 - feriados nacionais do Brasil
 - Sexta-feira Santa
 
-## Fluxo 3. Resumo Mensal Historico
+## Publicacao publica (GitHub Pages)
+
+Alem da copia local (`Slide de Win Rate Interativo\`), o painel de **Aprovacao do Gestor** tem uma versao
+publicada de verdade, acessivel por link, sem precisar estar na maquina local.
+
+### Como funciona
+
+- O repositorio (`https://github.com/ericocasarano/trilha-aprovacao-orcamentos-labor`) e **publico** no
+  GitHub, com o codigo-fonte do projeto (scripts, HTML, etc.) — mas **sem** os dados gerados a cada
+  rodada nem segredos (isso fica de fora via `.gitignore`).
+- A pasta `docs/` na raiz do repositorio contem a versao publicavel do HTML (copia de
+  `Slide de Win Rate Interativo\Aprovacao Gestor Labor.dc.html`), hospedada via **GitHub Pages** em:
+
+  `https://ericocasarano.github.io/trilha-aprovacao-orcamentos-labor/`
+
+- Em vez de carregar os dados de um arquivo local (`./data/aprovacao_gestor_latest.js`), o `docs/index.html`
+  aponta o `<script src>` pra uma **URL de compartilhamento do SharePoint** do arquivo
+  `aprovacao_gestor_latest.js` publicado em `Producao\StaticWebApp`.
+- Isso funciona porque uma tag `<script src>` nao passa pelas travas de CORS que um `fetch()` teria — o
+  navegador carrega o arquivo como um recurso normal (igual um `<img>` ou CDN), e o cookie de sessao do
+  SharePoint e enviado junto. Resultado: **o link e publico, mas os dados so aparecem pra quem estiver
+  logado na conta Microsoft da empresa** — sem login, o SharePoint bloqueia e nenhum dado carrega.
+- Se os dados nao carregarem (falha de login, link expirado, etc.), a pagina mostra um modal explicando
+  que e preciso estar logado, com um botao pra recarregar depois de logar.
+
+### O que isso depende
+
+- O `.ps1` continuar publicando `aprovacao_gestor_latest.js` em `Producao\StaticWebApp` a cada rodada
+  (ver secao do Fluxo 3 acima) — sem isso, a pagina publica fica com dado desatualizado.
+- O link de compartilhamento do SharePoint embutido no `docs/index.html` continuar valido — se ele for
+  revogado/expirar, e preciso gerar um novo link e atualizar o `<script src>` no arquivo.
+- O GitHub Pages estar habilitado nas configuracoes do repositorio (Settings → Pages → Branch `main`,
+  pasta `/docs`).
+
+### Limitacao atual
+
+Hoje **so o painel de Aprovacao do Gestor** tem essa publicacao. Os outros dois HTMLs
+(`Win Rate Labor.dc.html`, usado pelo Resumo Atual e Comparativo) continuam carregando os dados de forma
+local (`./data/comparativo_latest.js` e `./data/resumo_atual_latest.js`) — nenhum dos dois e copiado pro
+SharePoint nem publicado no GitHub Pages ainda. Pra ter o mesmo link publico pra esses dois, seria preciso
+replicar o mesmo padrao (passo de copia no `.ps1` + copia do HTML em `docs/` + link de compartilhamento
+do SharePoint).
+
+### Publicando uma mudanca de codigo
+
+Depois de editar qualquer arquivo do projeto:
+
+```bash
+cd C:\analise_funil
+git status
+git add nome_do_arquivo
+git commit -m "Descricao da mudanca"
+git push -u origin main
+```
+
+Antes de commitar, vale checar que nao vazou nada sensivel:
+
+```bash
+git diff --cached --name-only -z | xargs -0 grep -lI "erico.moraes\|BUNZL"
+```
+
+## Fluxo 4. Resumo Mensal Historico
 
 ### O que o fluxo faz
 
@@ -539,3 +694,11 @@ O comparativo:
   - `Periodo Atual`
   - `Atualizado em`
 - no fim de cada rodada os scripts exibem os principais arquivos gerados
+- desde a correcao do `.ultima_base_funil.json`, o Insight Funil e o Comparativo sempre nascem da mesma
+  base de extracao (contanto que o Comparativo rode ate 6h depois do Insight Funil)
+- o painel de Aprovacao do Gestor tem link publico (GitHub Pages), gated por login do SharePoint; os
+  outros dois paineis (Resumo Atual e Comparativo) ainda so funcionam localmente
+- a identidade do Git usada nos commits deve ser `Erico Casarano <erico.casarano@exemplo.com>` — se um
+  commit sair com outro autor (ex.: e-mail corporativo real), corrija antes de publicar
+  (`git commit --amend --author="Erico Casarano <erico.casarano@exemplo.com>"`, so em commits ainda nao
+  enviados ao GitHub)

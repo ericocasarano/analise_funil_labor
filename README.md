@@ -131,7 +131,9 @@ Objetivo: gerar o JSON comparativo entre 2 periodos e enviar para a pasta final 
 
 Etapas:
 
-1. O comparativo usa a mesma base da rodada utilizada pelo `Insight Funil`.
+1. O comparativo usa a mesma base da rodada utilizada pelo `Insight Funil` — garantido por um arquivo
+   `.ultima_base_funil.json` que o fluxo principal grava com o DAX1/DAX2 exatos usados, e que o
+   comparativo le antes de buscar qualquer arquivo (valido por ate 6h; ver detalhes em `AUTOMACAO.md`).
 2. O periodo atual e o periodo anterior proporcional sao recortados a partir dessa base.
 3. Sao gerados 2 resumos independentes.
 4. O script consolida os 2 resumos em um JSON comparativo.
@@ -178,7 +180,36 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\rodar_fluxo_comparativo_funil.ps1 -Ambiente Producao
 ```
 
-## 3. Fluxos Power Automate
+## 3. Painel de Aprovacao do Gestor
+Objetivo: gerar a analise executiva da jornada de revisao do gestor (Excel + JSON) e atualizar o
+dashboard HTML interativo, local e publicado.
+
+Comando usado no dia a dia:
+
+```powershell
+cd C:\analise_funil
+Set-ExecutionPolicy -Scope Process Bypass
+.\rodar_fluxo_aprovacao_gestor.ps1 -UsarBloco3 -Visao com_ruido
+```
+
+Etapas:
+
+1. le os JSONs mais recentes de `/Entrada/FunilExtracao` (e de `/Entrada/OrcamentosRevisadosExtracao`
+   quando `-UsarBloco3` e usado).
+2. converte e trata os arquivos em `entrada/`.
+3. monta a analise (Excel em `historico/`, JSON em `alertas/`).
+4. atualiza o slide HTML local (`Slide de Win Rate Interativo\data\aprovacao_gestor_latest.js`).
+5. publica uma copia desse `.js` na pasta do SharePoint (`Producao\StaticWebApp`), que alimenta a
+   versao publica do painel — a menos que `-NoPublicar` seja informado.
+
+Link publico (dados so carregam pra quem estiver logado na conta Microsoft da empresa):
+
+`https://ericocasarano.github.io/trilha-aprovacao-orcamentos-labor/`
+
+Documentacao completa (parametros, `-UsarBloco3`, como funciona a publicacao no GitHub Pages) esta em
+`AUTOMACAO.md`, secao "Fluxo 3. Painel de Aprovacao do Gestor" e "Publicacao publica (GitHub Pages)".
+
+## 4. Fluxos Power Automate
 Recomendacao de organizacao:
 
 - `Fluxo 1 - Extracao DAX Power BI`
@@ -191,7 +222,7 @@ Recomendacao de organizacao:
 - `Fluxo 3 - Publicacao Comparativo`
   Funcao: monitorar a pasta final de comparativo e postar o Adaptive Card comparativo no Teams.
 
-## 4. Resumo Mensal Auxiliar
+## 5. Resumo Mensal Auxiliar
 Objetivo: gerar uma planilha mensal historica com os mesmos conceitos de remocao de ruido usados no funil principal, sem depender do Excel consolidado da rodada.
 
 Script principal:
@@ -264,7 +295,7 @@ $dax2 = Get-ChildItem -LiteralPath $jsonDir -Filter "dax2_itens_powerbi_*.json" 
 py -3.12 .\gerar_resumo_mensal_funil.py -i $dax1.FullName -it $dax2.FullName --modo calendario --start 2025-12-01 --end 2026-04-30 -o resumo_calendario_dez_abr
 ```
 
-## 5. Estrutura de Pastas
+## 6. Estrutura de Pastas
 Sugestao de organizacao:
 
 - Entrada bruta:
@@ -282,7 +313,7 @@ Sugestao de organizacao:
 - Saida comparativo producao:
   pasta configurada em `comparativo_json_dir` do ambiente `Producao`
 
-## 6. Regra de Uso
+## 7. Regra de Uso
 Use assim:
 
 - `rodar_fluxo_funil.ps1`
@@ -290,6 +321,9 @@ Use assim:
 
 - `rodar_fluxo_comparativo_funil.ps1`
   Quando quiser gerar o comparativo depois da rodada principal
+
+- `rodar_fluxo_aprovacao_gestor.ps1`
+  Quando quiser atualizar o painel de Aprovacao do Gestor (local e publicado)
 
 - `gerar_resumo_mensal_funil.py`
   Quando quiser gerar uma visao historica mensal auxiliar da base, em mes comercial ou calendario
@@ -316,7 +350,7 @@ Observacao sobre leitura temporal nos cards:
   - `Periodo Atual`
   - `Atualizado em`
 
-## 7. Resumo Operacional
+## 8. Resumo Operacional
 Insight Funil em teste:
 
 ```powershell
@@ -339,6 +373,12 @@ Comparativo producao:
 
 ```powershell
 .\rodar_fluxo_comparativo_funil.ps1 -Ambiente Producao
+```
+
+Painel de Aprovacao do Gestor:
+
+```powershell
+.\rodar_fluxo_aprovacao_gestor.ps1 -UsarBloco3 -Visao com_ruido
 ```
 
 Resumo mensal em mes calendario:
