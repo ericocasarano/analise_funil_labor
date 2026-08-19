@@ -30,7 +30,7 @@ def parse_args():
         description="Gera um JSON resumido da rodada para uso em AI Builder / Power Automate."
     )
     parser.add_argument("--oportunidades", required=True, help="Arquivo oportunidades_reais_auto_...xlsx")
-    parser.add_argument("--entrada-dax1", required=True, help="Arquivo dax1_remocao_ruidos_...xlsx tratado em entrada/")
+    parser.add_argument("--entrada-dax1", required=True, help="Arquivo dax_orcamentos_tratado_power_automate_...xlsx tratado em entrada/")
     parser.add_argument("--start-date", default="", help="Periodo inicial solicitado no formato YYYY-MM-DD.")
     parser.add_argument("--end-date", default="", help="Periodo final solicitado no formato YYYY-MM-DD.")
     parser.add_argument(

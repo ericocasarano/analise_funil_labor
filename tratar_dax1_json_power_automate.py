@@ -95,7 +95,7 @@ def parse_args():
         "-o",
         "--output",
         default="",
-        help="Arquivo XLSX de saida. Se vazio, salva em entrada/dax1_remocao_ruidos_<timestamp>.xlsx.",
+        help="Arquivo XLSX de saida. Se vazio, salva em entrada/dax_orcamentos_tratado_power_automate_<timestamp>.xlsx.",
     )
     parser.add_argument(
         "--timestamp",
@@ -195,7 +195,7 @@ def main():
     output_path = (
         Path(args.output).resolve()
         if args.output
-        else (Path.cwd() / "entrada" / f"dax1_remocao_ruidos_{timestamp}.xlsx")
+        else (Path.cwd() / "entrada" / f"dax_orcamentos_tratado_power_automate_{timestamp}.xlsx")
     )
 
     df = convert_power_automate_json(input_path, output_path)

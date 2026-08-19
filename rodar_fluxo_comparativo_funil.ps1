@@ -444,8 +444,8 @@ if (-not (Test-Path $entradaDir)) {
   New-Item -ItemType Directory -Path $entradaDir | Out-Null
 }
 
-$arquivoRuido = Join-Path $entradaDir ("dax1_remocao_ruidos_comparativo_{0}.xlsx" -f $timestamp)
-$arquivoItens = Join-Path $entradaDir ("dax2_itens_orcamento_comparativo_{0}.xlsx" -f $timestamp)
+$arquivoRuido = Join-Path $entradaDir ("dax_orcamentos_tratado_comparativo_power_automate_{0}.xlsx" -f $timestamp)
+$arquivoItens = Join-Path $entradaDir ("dax_itens_tratado_comparativo_power_automate_{0}.xlsx" -f $timestamp)
 
 Write-Host "Convertendo DAX 1..."
 Invoke-Python -PythonExecutable $pythonExe -Arguments @(
