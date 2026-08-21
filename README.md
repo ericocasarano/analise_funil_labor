@@ -424,7 +424,29 @@ O PowerShell do `Comparativo`:
 3. copia o comparativo para a pasta sincronizada correta
 4. deixa o Power Automate assumir a postagem no Teams
 
-## 9. Publicando uma mudanca de codigo
+## 9. Publicacao publica (GitHub Pages)
+
+O dashboard interativo (`Dashboard Analise Funil\dashboard_analise_funil.dc.html`, com os cards `Resumo Atual` e `Comparativo`) tem uma versao publicada de verdade, acessivel por link, sem precisar estar na maquina local.
+
+### Como funciona
+
+- Os dois `.ps1` (`rodar_fluxo_funil.ps1` e `rodar_fluxo_comparativo_funil.ps1`) copiam o `.js` gerado a cada rodada (`resumo_insight_dashboard.js` / `comparativo_dashboard.js`) pra pasta configurada em `paths.dashboard_analise_funil_publish_dir` (pasta do SharePoint) — a menos que `-NoPublicarDashboard` seja informado.
+- A pasta `docs\` na raiz do repositorio contem a versao publicavel do HTML (copia de `Dashboard Analise Funil\dashboard_analise_funil.dc.html`), hospedada via **GitHub Pages**.
+- Em vez de carregar os dados de um arquivo local (`./data/*.js`), o `docs\index.html` aponta os dois `<script src>` pra **URLs de compartilhamento do SharePoint** dos arquivos publicados.
+- Isso funciona porque uma tag `<script src>` nao passa pelas travas de CORS que um `fetch()` teria — o navegador carrega o arquivo como um recurso normal, e o cookie de sessao do SharePoint e enviado junto. Resultado: **o link e publico, mas os dados so aparecem pra quem estiver logado na conta Microsoft da empresa** — sem login, o SharePoint bloqueia e nenhum dado carrega.
+- Se os dados nao carregarem (falha de login, link expirado, etc.), a pagina mostra um modal explicando que e preciso estar logado, com um botao pra recarregar depois de logar.
+
+### O que isso depende
+
+- Os `.ps1` continuarem publicando os dois `.js` em `dashboard_analise_funil_publish_dir` a cada rodada — sem isso, a pagina publica fica com dado desatualizado.
+- Os links de compartilhamento do SharePoint embutidos no `docs\index.html` continuarem validos — se forem revogados/expirarem, e preciso gerar novos links e atualizar os `<script src>` no arquivo.
+- O GitHub Pages estar habilitado nas configuracoes do repositorio (Settings → Pages → Branch `main`, pasta `/docs`).
+
+### Limitacao atual
+
+Como `docs\index.html` e uma copia estatica do `.dc.html`, qualquer mudanca visual feita no dashboard local precisa ser replicada manualmente em `docs\index.html` (trocando so os `<script src>` de volta pros links do SharePoint) pra a versao publica acompanhar.
+
+## 10. Publicando uma mudanca de codigo
 
 Depois de editar qualquer arquivo do projeto:
 
@@ -442,7 +464,7 @@ Antes de commitar, vale checar que nao vazou nada sensivel:
 git diff --cached --name-only -z | xargs -0 grep -lI "erico.moraes\|BUNZL"
 ```
 
-## 10. Observacoes importantes
+## 11. Observacoes importantes
 
 - hoje a operacao normal nao depende de login manual no Power BI, porque a extracao base vem do Power Automate
 - a postagem no Teams hoje acontece via Power Automate

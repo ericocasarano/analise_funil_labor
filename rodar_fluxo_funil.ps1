@@ -13,6 +13,7 @@ param(
   [string]$ModoDataItens = "",
   [switch]$SkipItensPerdas,
   [switch]$NoSharePoint,
+  [switch]$NoPublicarDashboard,
   [switch]$ForceRun
 )
 
@@ -307,6 +308,7 @@ if ($configObj.alerts.environments -and $configObj.alerts.environments.$ambiente
     $insightJsonDir = $configObj.alerts.environments.$ambienteKey.insight_json_dir
   }
 }
+$dashboardPublishDir = $configObj.paths.dashboard_analise_funil_publish_dir
 
 $dax1Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax1Pattern
 $dax2Json = Get-LatestFile -Directory $JsonDir -Pattern $Dax2Pattern
@@ -402,6 +404,27 @@ try {
   }
   else {
     Write-Host "Script de atualizacao do slide de resumo nao encontrado. Seguindo sem atualizar o HTML interativo."
+  }
+
+  $resumoDashboardJs = ".\Dashboard Analise Funil\data\resumo_insight_dashboard.js"
+  if ($NoPublicarDashboard) {
+    Write-Host "NoPublicarDashboard informado. Slide de resumo mantido apenas localmente."
+  }
+  elseif ($dashboardPublishDir) {
+    if (-not (Test-Path $dashboardPublishDir)) {
+      throw "Diretorio de dashboard_analise_funil_publish_dir nao encontrado: $dashboardPublishDir"
+    }
+    if (Test-Path $resumoDashboardJs) {
+      $resumoDashboardJsDestino = Join-Path $dashboardPublishDir "resumo_insight_dashboard.js"
+      Copy-Item $resumoDashboardJs $resumoDashboardJsDestino -Force
+      Write-Host "Slide de resumo publicado para:" $resumoDashboardJsDestino
+    }
+    else {
+      Write-Host "Arquivo $resumoDashboardJs nao encontrado. Slide de resumo nao foi publicado."
+    }
+  }
+  else {
+    Write-Host "dashboard_analise_funil_publish_dir nao configurado. Dashboard publico nao foi atualizado."
   }
 
   if ($NoSharePoint) {

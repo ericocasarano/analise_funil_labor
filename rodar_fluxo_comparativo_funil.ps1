@@ -12,6 +12,7 @@ param(
   [string]$ModoDataItens = "",
   [switch]$SkipItensPerdas,
   [switch]$NoPublicarComparativo,
+  [switch]$NoPublicarDashboard,
   [switch]$ForceRun
 )
 
@@ -412,6 +413,7 @@ $comparativoJsonDir = $null
 if ($configObj.alerts.environments -and $configObj.alerts.environments.$ambienteKey) {
   $comparativoJsonDir = $configObj.alerts.environments.$ambienteKey.comparativo_json_dir
 }
+$dashboardPublishDir = $configObj.paths.dashboard_analise_funil_publish_dir
 
 $dax1Json = $null
 $dax2Json = $null
@@ -552,6 +554,27 @@ try {
   }
   else {
     Write-Host "Script de atualizacao do slide nao encontrado. Seguindo sem atualizar o HTML interativo."
+  }
+
+  $comparativoDashboardJs = ".\Dashboard Analise Funil\data\comparativo_dashboard.js"
+  if ($NoPublicarDashboard) {
+    Write-Host "NoPublicarDashboard informado. Slide de comparativo mantido apenas localmente."
+  }
+  elseif ($dashboardPublishDir) {
+    if (-not (Test-Path $dashboardPublishDir)) {
+      throw "Diretorio de dashboard_analise_funil_publish_dir nao encontrado: $dashboardPublishDir"
+    }
+    if (Test-Path $comparativoDashboardJs) {
+      $comparativoDashboardJsDestino = Join-Path $dashboardPublishDir "comparativo_dashboard.js"
+      Copy-Item $comparativoDashboardJs $comparativoDashboardJsDestino -Force
+      Write-Host "Slide de comparativo publicado para:" $comparativoDashboardJsDestino
+    }
+    else {
+      Write-Host "Arquivo $comparativoDashboardJs nao encontrado. Slide de comparativo nao foi publicado."
+    }
+  }
+  else {
+    Write-Host "dashboard_analise_funil_publish_dir nao configurado. Dashboard publico nao foi atualizado."
   }
 
   if ($NoPublicarComparativo) {

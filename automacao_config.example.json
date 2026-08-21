@@ -3,7 +3,8 @@
   "python_executable": "py -3.12",
   "paths": {
     "history_dir": "./historico",
-    "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao"
+    "json_dir": "C:\\CAMINHO\\PARA\\Entrada\\FunilExtracao",
+    "dashboard_analise_funil_publish_dir": "C:\\CAMINHO\\PARA\\Producao\\StaticWebApp"
   },
   "scripts": {
     "step1": "./gerar_oportunidades_reais_codes.py",
