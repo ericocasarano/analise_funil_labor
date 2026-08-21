@@ -441,16 +441,39 @@ Observacao sobre leitura temporal nos cards:
 
 ## 7. Resumo Operacional
 
+Sempre comece navegando ate a pasta do projeto e liberando a execucao de script (so vale pra essa janela do PowerShell, nao muda nada permanente):
+
 ```powershell
-.\rodar_fluxo_funil.ps1 -Ambiente Teste
-.\rodar_fluxo_funil.ps1 -Ambiente Producao
+cd C:\analise_funil
+Set-ExecutionPolicy -Scope Process Bypass
+```
 
-.\rodar_fluxo_comparativo_funil.ps1 -Ambiente Teste
-.\rodar_fluxo_comparativo_funil.ps1 -Ambiente Producao
+Comandos mais usados no dia a dia:
 
+```powershell
+# Fluxo 1 (Insight Funil) - teste rapido, sem publicar nada
+.\rodar_fluxo_funil.ps1 -Ambiente Teste -SkipItensPerdas -NoSharePoint
+
+# Fluxo 1 - producao real (posta no Teams, publica no dashboard)
+.\rodar_fluxo_funil.ps1 -Ambiente Producao -SkipItensPerdas
+
+# Fluxo 2 (Comparativo) - mesma logica
+.\rodar_fluxo_comparativo_funil.ps1 -Ambiente Teste -SkipItensPerdas -NoPublicarComparativo
+.\rodar_fluxo_comparativo_funil.ps1 -Ambiente Producao -SkipItensPerdas
+
+# Os dois em sequencia (o mesmo comando que a automacao agendada roda)
+.\rodar_fluxos_diarios.ps1 -Ambiente Producao
+
+# Limpeza de arquivos antigos (simulacao vs. de verdade)
+.\limpar_arquivos_antigos.ps1
+.\limpar_arquivos_antigos.ps1 -Executar
+
+# Resumo mensal auxiliar
 .\gerar_resumo_mensal_funil.py -i ".\entrada\dax1_jan_maio.xlsx" -it ".\entrada\dax2_jan_maio.xlsx" --modo calendario --start 2026-04-01 --end 2026-04-30 -o resumo_calendario_abril
 .\gerar_resumo_mensal_funil.py -i ".\entrada\dax1_jan_maio.xlsx" -it ".\entrada\dax2_jan_maio.xlsx" --start 2026-03-31 --end 2026-04-29 -o resumo_comercial_abril
 ```
+
+> `-SkipItensPerdas` pula a etapa mais lenta (rankings/itens perdidos, ~5-7min) — seguro de usar porque o JSON final e o dashboard nao dependem dela. Sem esse parametro, o fluxo tambem gera o Excel completo em `historico\itens_perdas_reais_auto_*.xlsx`.
 
 ## 8. Integracao com o Power Automate
 
