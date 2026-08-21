@@ -23,6 +23,45 @@ Modo de operacao atual:
 - o Power Automate executa as consultas DAX no Power BI e grava os JSONs na pasta de extracao sincronizada
 - a execucao local dos scripts acontece manualmente, por comando, em `Teste` ou `Producao`
 
+## Diagrama do Fluxo
+
+```mermaid
+flowchart TD
+    DAX["Power BI: consultas DAX"] --> PA["Power Automate salva JSONs brutos<br/>em Entrada/FunilExtracao"]
+
+    PA --> F1START["rodar_fluxo_funil.ps1"]
+    PA -.->|"mesma base, via<br/>.ultima_base_funil.json"| F2START["rodar_fluxo_comparativo_funil.ps1"]
+
+    subgraph FLUXO1["Fluxo 1 — Insight Funil"]
+        F1START --> T1["tratar_dax_orcamentos/itens_json_power_automate.py"]
+        T1 --> P1["automacao_pipeline.py<br/>remove ruido + nao convertidos"]
+        P1 --> I1["gerar_resumo_insight_json.py"]
+        I1 --> J1["resumo_insight_card_teams_*.json"]
+        J1 --> TEAMS1["Power Automate posta<br/>Adaptive Card no Teams"]
+        I1 --> DASH1["atualizar_dashboard_resumo_insight_js.py"]
+        DASH1 --> JS1["resumo_insight_dashboard.js"]
+    end
+
+    subgraph FLUXO2["Fluxo 2 — Comparativo"]
+        F2START --> T2["tratar_dax_orcamentos/itens_json_power_automate.py"]
+        T2 --> P2A["automacao_pipeline.py<br/>periodo atual"]
+        T2 --> P2B["automacao_pipeline.py<br/>periodo anterior"]
+        P2A --> I2A["resumo_insight_periodo_atual_*.json"]
+        P2B --> I2B["resumo_insight_periodo_a_*.json"]
+        I2A --> COMP["gerar_comparativo_resumo_insight_periodos.py"]
+        I2B --> COMP
+        COMP --> J2["comparativo_resumo_insight_card_teams_*.json"]
+        J2 --> TEAMS2["Power Automate posta<br/>card comparativo no Teams"]
+        COMP --> DASH2["atualizar_dashboard_comparativo_js.py"]
+        DASH2 --> JS2["comparativo_dashboard.js"]
+    end
+
+    JS1 --> PUB["Copy-Item para<br/>SharePoint StaticWebApp"]
+    JS2 --> PUB
+    PUB --> SHARE["Link de compartilhamento<br/>do SharePoint"]
+    SHARE --> PAGES["docs/index.html via GitHub Pages<br/>gated por login Microsoft"]
+```
+
 ### Estrategia adotada
 
 A extracao base da rodada vem do Power Automate, com os arquivos JSON gravados na pasta de entrada sincronizada. Beneficios:
