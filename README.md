@@ -419,16 +419,18 @@ Sugestao de organizacao:
 - Saida insight producao: pasta configurada em `insight_json_dir` do ambiente `Producao`
 - Saida comparativo teste: pasta configurada em `comparativo_json_dir` do ambiente `Teste`
 - Saida comparativo producao: pasta configurada em `comparativo_json_dir` do ambiente `Producao`
+- Logs da automacao agendada: `logs\` (local, fora do Git, com retencao de 30 dias — ver secao 9)
 
 ## 6. Regra de Uso
 
 - `rodar_fluxo_funil.ps1` — quando quiser executar a rodada principal do funil e gerar o `Insight Funil`
 - `rodar_fluxo_comparativo_funil.ps1` — quando quiser gerar o comparativo depois da rodada principal
+- `rodar_fluxos_diarios.ps1` — roda os dois em sequencia (usado pela automacao agendada, ver secao 9)
 - `gerar_resumo_mensal_funil.py` — quando quiser gerar uma visao historica mensal auxiliar da base, em mes comercial ou calendario
 
 Observacao operacional:
 
-- hoje o uso previsto e manual; primeiro rode o `Insight Funil`, depois rode o `Comparativo`
+- o uso diario normal e automatico via Agendador de Tarefas do Windows (ver secao 9); tambem da pra rodar manualmente a qualquer momento, primeiro `Insight Funil`, depois `Comparativo`
 - a extracao base ja deve ter sido gerada pelo Power Automate antes dos comandos locais
 - no modo padrao: `Insight Funil` considera mes comercial atual ate ontem; `Comparativo` considera mes comercial atual ate ontem versus periodo equivalente do mes comercial anterior por dias uteis; `Resumo Mensal Funil` usa o modo `comercial`, salvo quando `--modo calendario` for informado
 
@@ -465,7 +467,58 @@ O PowerShell do `Comparativo`:
 3. copia o comparativo para a pasta sincronizada correta
 4. deixa o Power Automate assumir a postagem no Teams
 
-## 9. Publicacao publica (GitHub Pages)
+## 9. Automacao Agendada (Task Scheduler)
+
+A rodada diaria roda sozinha, via **Agendador de Tarefas do Windows**, sem precisar de comando manual.
+
+### Dependencia do Power Automate
+
+O fluxo do Power Automate que extrai as consultas DAX roda de **segunda a sexta, as 7:30** (horario de Brasilia). A automacao local so faz sentido rodar depois disso — nao ha extracao nova aos fins de semana.
+
+### `rodar_fluxos_diarios.ps1`
+
+Script wrapper que roda o `Insight Funil` e, se terminar sem erro, na sequencia o `Comparativo` — ambos com `-SkipItensPerdas` (a etapa de itens/rankings nao e usada pelo JSON final nem pelo dashboard, entao pular ela deixa a rodada bem mais rapida). Se o Fluxo 1 falhar, o Fluxo 2 nao roda.
+
+Cria a pasta `logs\` automaticamente e grava um log timestampado de cada execucao (`logs\agendamento_fluxos_YYYYMMDD_HHMMSS.log`, via `Start-Transcript`), com tudo que apareceria na tela numa rodada manual — inclusive erros.
+
+Uso manual (se quiser rodar fora do horario agendado):
+
+```powershell
+cd C:\analise_funil
+.\rodar_fluxos_diarios.ps1 -Ambiente Producao
+```
+
+### Tarefa 1 — `AnaliseFunil_FluxosDiarios`
+
+- Disparador: semanalmente, segunda a sexta, **08:15**
+- Acao: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\analise_funil\rodar_fluxos_diarios.ps1" -Ambiente Producao`
+- Iniciar em: `C:\analise_funil`
+- "Executar somente quando o usuario estiver conectado" (nao guarda senha)
+- "Reativar o computador para executar esta tarefa" marcado (funciona mesmo com o PC suspenso)
+- "Executar a tarefa o mais cedo possivel apos uma inicializacao agendada perdida" marcado (se o PC estiver desligado no horario, roda assim que ligar)
+
+### `limpar_arquivos_antigos.ps1`
+
+Apaga arquivos com mais de N dias (padrao **30**) de `entrada\`, `historico\`, `alertas\`, `logs\` e `.run_guard\` — as pastas que crescem sem parar a cada rodada. Roda em **modo simulacao por padrao** (so mostra o que apagaria); precisa da flag `-Executar` pra apagar de verdade.
+
+```powershell
+cd C:\analise_funil
+.\limpar_arquivos_antigos.ps1              # simulacao, 30 dias
+.\limpar_arquivos_antigos.ps1 -Executar     # apaga de verdade
+.\limpar_arquivos_antigos.ps1 -DiasRetencao 60 -Executar   # outro periodo
+```
+
+### Tarefa 2 — `AnaliseFunil_LimparArquivosAntigos`
+
+- Disparador: mensalmente, dia 1, **07:00**
+- Acao: `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { $logFile = 'C:\analise_funil\logs\limpeza_' + (Get-Date -Format yyyyMMdd_HHmmss) + '.log'; & '.\limpar_arquivos_antigos.ps1' -Executar *>&1 | Tee-Object -FilePath $logFile }"`
+- Mesmas configuracoes de condicoes/configuracoes da Tarefa 1
+
+### Conferindo se rodou
+
+Abra `C:\analise_funil\logs\` — cada execucao (dos fluxos ou da limpeza) gera um arquivo novo com timestamp no nome. Se o texto final for `"Fluxo 1 e Fluxo 2 concluidos com sucesso."`, deu tudo certo; se parar no meio com `"ERRO no Fluxo 1: ..."` ou `"ERRO no Fluxo 2: ..."`, o log mostra onde falhou.
+
+## 10. Publicacao publica (GitHub Pages)
 
 O dashboard interativo (`Dashboard Analise Funil\dashboard_analise_funil.dc.html`, com os cards `Resumo Atual` e `Comparativo`) tem uma versao publicada de verdade, acessivel por link, sem precisar estar na maquina local.
 
@@ -487,7 +540,7 @@ O dashboard interativo (`Dashboard Analise Funil\dashboard_analise_funil.dc.html
 
 Como `docs\index.html` e uma copia estatica do `.dc.html`, qualquer mudanca visual feita no dashboard local precisa ser replicada manualmente em `docs\index.html` (trocando so os `<script src>` de volta pros links do SharePoint) pra a versao publica acompanhar.
 
-## 10. Publicando uma mudanca de codigo
+## 11. Publicando uma mudanca de codigo
 
 Depois de editar qualquer arquivo do projeto:
 
@@ -505,7 +558,7 @@ Antes de commitar, vale checar que nao vazou nada sensivel:
 git diff --cached --name-only -z | xargs -0 grep -lI "erico.moraes\|BUNZL"
 ```
 
-## 11. Observacoes importantes
+## 12. Observacoes importantes
 
 - hoje a operacao normal nao depende de login manual no Power BI, porque a extracao base vem do Power Automate
 - a postagem no Teams hoje acontece via Power Automate
@@ -515,6 +568,8 @@ git diff --cached --name-only -z | xargs -0 grep -lI "erico.moraes\|BUNZL"
 - no fim de cada rodada os scripts exibem os principais arquivos gerados
 - desde a correcao do `.ultima_base_funil.json`, o Insight Funil e o Comparativo sempre nascem da mesma
   base de extracao (contanto que o Comparativo rode ate 6h depois do Insight Funil)
+- a rodada diaria (seg-sex, 08:15) roda sozinha via Agendador de Tarefas do Windows, chamando
+  `rodar_fluxos_diarios.ps1`; a limpeza de arquivos antigos roda mensalmente (dia 1, 07:00) — ver secao 9
 - a identidade do Git usada nos commits deve ser `Erico Casarano <erico.casarano@exemplo.com>` — se um
   commit sair com outro autor (ex.: e-mail corporativo real), corrija antes de publicar
   (`git commit --amend --author="Erico Casarano <erico.casarano@exemplo.com>"`, so em commits ainda nao

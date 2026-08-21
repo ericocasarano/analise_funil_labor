@@ -4,6 +4,7 @@ historico/
 alertas/
 graficos/
 .run_guard/
+logs/
 
 # Snapshot de dados consumido pelo dashboard (regenerado a cada rodada)
 Dashboard Analise Funil/data/*.js
