@@ -172,6 +172,7 @@ A media ponderada permanece disponivel como referencia financeira/volume.
 - `-StartDate YYYY-MM-DD` — define a data inicial da extracao
 - `-EndDate YYYY-MM-DD` — define a data final da extracao
 - `-NoSharePoint` — gera o JSON final apenas localmente, sem copiar para a pasta sincronizada
+- `-NoPublicarDashboard` — gera o `.js` do dashboard apenas localmente, sem copiar para `dashboard_analise_funil_publish_dir` (não afeta a publicação pública via GitHub Pages)
 
 ### Comportamento padrao
 
@@ -269,6 +270,7 @@ O script considera automaticamente: sabados, domingos, feriados nacionais do Bra
 - `-StartDate YYYY-MM-DD` — opcional; define o inicio do periodo atual
 - `-EndDate YYYY-MM-DD` — opcional; define o fim do periodo atual
 - `-NoPublicarComparativo` — gera os arquivos localmente, mas nao copia o comparativo para a pasta sincronizada
+- `-NoPublicarDashboard` — gera o `.js` do dashboard apenas localmente, sem copiar para `dashboard_analise_funil_publish_dir` (não afeta a publicação pública via GitHub Pages)
 
 ### Comportamento padrao
 
