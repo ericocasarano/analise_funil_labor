@@ -22,7 +22,7 @@
 </style>
 </helmet>
 
-<div ref="{{ rootRef }}" style="width:100vw;height:100vh;min-width:100vw;min-height:100vh;position:relative;background:radial-gradient(120% 120% at 50% 0%, #EDF1FA 0%, #DEE4F2 100%);overflow:hidden;">
+<div id="df-dashboard-root" ref="{{ rootRef }}" style="width:100vw;height:100vh;min-width:100vw;min-height:100vh;position:relative;background:radial-gradient(120% 120% at 50% 0%, #EDF1FA 0%, #DEE4F2 100%);overflow:hidden;visibility:hidden;">
   <div style="width:1920px;height:1080px;position:absolute;left:50%;top:50%;transform:translate(-50%, -50%) scale({{ scale }});transform-origin:center center;background:#F4F6FC;overflow:hidden;">
 
     <!-- ambient brand wash -->
@@ -701,6 +701,13 @@ class Component extends DCLogic {
   </div>
 </div>
 <script>
+  var __dashboardRevealed = false;
+  function __revealDashboard() {
+    if (__dashboardRevealed) return;
+    __dashboardRevealed = true;
+    var __root = document.getElementById('df-dashboard-root');
+    if (__root) __root.style.visibility = 'visible';
+  }
   function __checkDashboardAccess() {
     if (window.__COMPARATIVO_DATA_FAILED || window.__RESUMO_DATA_FAILED || !window.WIN_RATE_COMPARATIVO_DATA || !window.WIN_RATE_RESUMO_ATUAL_DATA) {
       var __noAccessModal = document.getElementById('df-noaccess-modal');
@@ -708,6 +715,8 @@ class Component extends DCLogic {
         __noAccessModal.classList.add('is-open');
         __noAccessModal.setAttribute('aria-hidden', 'false');
       }
+    } else {
+      __revealDashboard();
     }
   }
   document.addEventListener('click', function (e) {
@@ -719,6 +728,7 @@ class Component extends DCLogic {
         __m.classList.remove('is-open');
         __m.setAttribute('aria-hidden', 'true');
       }
+      __revealDashboard();
     }
   });
   if (document.readyState === 'complete') {
