@@ -28,3 +28,6 @@ historico/~$*.xlsx
 # Arquivos de rascunho/teste
 tmp_*.js
 _teste_*
+
+# Configuracao/sessao local do Claude Code
+.claude/
