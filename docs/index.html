@@ -708,15 +708,11 @@ class Component extends DCLogic {
     var __root = document.getElementById('df-dashboard-root');
     if (__root) __root.style.visibility = 'visible';
   }
-  function __checkDashboardAccess() {
-    if (window.__COMPARATIVO_DATA_FAILED || window.__RESUMO_DATA_FAILED || !window.WIN_RATE_COMPARATIVO_DATA || !window.WIN_RATE_RESUMO_ATUAL_DATA) {
-      var __noAccessModal = document.getElementById('df-noaccess-modal');
-      if (__noAccessModal) {
-        __noAccessModal.classList.add('is-open');
-        __noAccessModal.setAttribute('aria-hidden', 'false');
-      }
-    } else {
-      __revealDashboard();
+  function __showNoAccessModal() {
+    var __noAccessModal = document.getElementById('df-noaccess-modal');
+    if (__noAccessModal) {
+      __noAccessModal.classList.add('is-open');
+      __noAccessModal.setAttribute('aria-hidden', 'false');
     }
   }
   document.addEventListener('click', function (e) {
@@ -731,12 +727,25 @@ class Component extends DCLogic {
       __revealDashboard();
     }
   });
-  if (document.readyState === 'complete') {
-    __checkDashboardAccess();
-  } else {
-    window.addEventListener('load', __checkDashboardAccess);
+  var __accessCheckAttempts = 0;
+  var __maxAccessCheckAttempts = 16; // 16 x 500ms = 8s
+  function __pollDashboardAccess() {
+    if (window.__COMPARATIVO_DATA_FAILED || window.__RESUMO_DATA_FAILED) {
+      __showNoAccessModal();
+      return;
+    }
+    if (window.WIN_RATE_COMPARATIVO_DATA && window.WIN_RATE_RESUMO_ATUAL_DATA) {
+      __revealDashboard();
+      return;
+    }
+    __accessCheckAttempts++;
+    if (__accessCheckAttempts >= __maxAccessCheckAttempts) {
+      __showNoAccessModal();
+      return;
+    }
+    setTimeout(__pollDashboardAccess, 500);
   }
-  setTimeout(__checkDashboardAccess, 4000);
+  __pollDashboardAccess();
 </script>
 </body>
 </html>
