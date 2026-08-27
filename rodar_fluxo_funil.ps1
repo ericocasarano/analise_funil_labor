@@ -427,6 +427,50 @@ try {
     Write-Host "dashboard_analise_funil_publish_dir nao configurado. Dashboard publico nao foi atualizado."
   }
 
+  $topItensJsonLocal = Join-Path ".\alertas" ("top_itens_card_teams_{0}.json" -f $timestamp)
+  Write-Host "Gerando JSON de top itens..."
+  Invoke-Python -PythonExecutable $pythonExe -Arguments @(
+    ".\gerar_top_itens_json.py",
+    "-i", $arquivoRuido,
+    "-it", $arquivoItens,
+    "--start", $effectiveStartDate,
+    "--end", $effectiveEndDate,
+    "-o", $topItensJsonLocal
+  )
+
+  $topItensUpdaterScript = ".\atualizar_dashboard_top_itens_js.py"
+  if (Test-Path $topItensUpdaterScript) {
+    Write-Host "Atualizando slide interativo - Top Itens..."
+    Invoke-Python -PythonExecutable $pythonExe -Arguments @(
+      $topItensUpdaterScript,
+      "-i", $topItensJsonLocal
+    )
+  }
+  else {
+    Write-Host "Script de atualizacao do slide de top itens nao encontrado. Seguindo sem atualizar o HTML interativo."
+  }
+
+  $topItensDashboardJs = ".\Dashboard Analise Funil\data\top_itens_dashboard.js"
+  if ($NoPublicarDashboard) {
+    Write-Host "NoPublicarDashboard informado. Slide de top itens mantido apenas localmente."
+  }
+  elseif ($dashboardPublishDir) {
+    if (-not (Test-Path $dashboardPublishDir)) {
+      throw "Diretorio de dashboard_analise_funil_publish_dir nao encontrado: $dashboardPublishDir"
+    }
+    if (Test-Path $topItensDashboardJs) {
+      $topItensDashboardJsDestino = Join-Path $dashboardPublishDir "top_itens_dashboard.js"
+      Copy-Item $topItensDashboardJs $topItensDashboardJsDestino -Force
+      Write-Host "Slide de top itens publicado para:" $topItensDashboardJsDestino
+    }
+    else {
+      Write-Host "Arquivo $topItensDashboardJs nao encontrado. Slide de top itens nao foi publicado."
+    }
+  }
+  else {
+    Write-Host "dashboard_analise_funil_publish_dir nao configurado. Slide de top itens nao foi publicado."
+  }
+
   if ($NoSharePoint) {
     Write-Host "NoSharePoint informado. JSON de insight mantido apenas localmente em:" $insightJsonLocal
   }
