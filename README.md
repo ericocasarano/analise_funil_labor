@@ -40,6 +40,11 @@ flowchart TD
         J1 --> TEAMS1["Power Automate posta<br/>Adaptive Card no Teams"]
         I1 --> DASH1["atualizar_dashboard_resumo_insight_js.py"]
         DASH1 --> JS1["resumo_insight_dashboard.js"]
+
+        T1 --> TI1["gerar_top_itens_json.py<br/>ranking por item"]
+        TI1 --> JTI["top_itens_card_teams_*.json"]
+        JTI --> DASHTI["atualizar_dashboard_top_itens_js.py"]
+        DASHTI --> JSTI["top_itens_dashboard.js"]
     end
 
     subgraph FLUXO2["Fluxo 2 — Comparativo"]
@@ -58,6 +63,7 @@ flowchart TD
 
     JS1 --> PUB["Copy-Item para<br/>SharePoint StaticWebApp"]
     JS2 --> PUB
+    JSTI --> PUB
     PUB --> SHARE["Link de compartilhamento<br/>do SharePoint"]
     SHARE --> PAGES["docs/index.html via GitHub Pages<br/>gated por login Microsoft"]
 ```
@@ -107,6 +113,8 @@ Objetivo: gerar o JSON final do resumo executivo do funil e enviar para a pasta 
 - `tratar_dax_itens_json_power_automate.py`
 - `automacao_pipeline.py`
 - `gerar_resumo_insight_json.py`
+- `gerar_top_itens_json.py` — rankings Top 5 por item (aba `Top Itens` do dashboard, ver secao 10)
+- `atualizar_dashboard_top_itens_js.py`
 
 ### Saidas principais
 
@@ -115,6 +123,7 @@ Objetivo: gerar o JSON final do resumo executivo do funil e enviar para a pasta 
 - `historico\oportunidades_reais_auto_YYYYMMDD_HHMMSS.xlsx`
 - `historico\itens_perdas_reais_auto_YYYYMMDD_HHMMSS.xlsx`
 - `alertas\resumo_insight_card_teams_YYYYMMDD_HHMMSS.json`
+- `alertas\top_itens_card_teams_YYYYMMDD_HHMMSS.json`
 - `.ultima_base_funil.json` (na raiz do projeto)
   - "bilhete" com o caminho exato do DAX1/DAX2 usados nessa rodada
   - lido pelo `rodar_fluxo_comparativo_funil.ps1` pra garantir que o Comparativo nasca da mesma base (ver Fluxo 2)
@@ -205,13 +214,24 @@ A media ponderada permanece disponivel como referencia financeira/volume.
 - o JSON do `Insight Funil` carrega `titulo`, `mes_comercial`, `periodo`, `atualizado_em`
 - isso permite ao Adaptive Card diferenciar o ciclo comercial da rodada da parcela efetivamente analisada ate ontem
 
+### Top Itens (ranking por item, aba do dashboard)
+
+`gerar_top_itens_json.py` reaproveita a leitura/remocao de ruido de `analisar_evolucao_diaria_item.py` (nao duplica logica) e gera rankings Top 5 por item, separados em 2 categorias mutuamente exclusivas por orcamento:
+
+- `Faturado`
+- `Enviados_Cliente_Nao_Aprovado` — orcamento foi enviado pra aprovacao do cliente e nunca faturou
+
+Essa classificacao **e diferente** da regra de `Base_Nao_Convertidas` do step 2 (secao acima): aqui nao ha filtro por status especifico de recusa/cancelamento, e a categoria de "nao aprovado" e mais ampla de proposito — a analise e por item (Top 5 por quantidade de orcamentos, volume e valor, faturado x nao aprovado), nao pelo funil inteiro. Roda de forma independente do step 2 e nao e afetada por `-SkipItensPerdas`.
+
+Alimenta a aba `Top Itens` do dashboard (ver secao 10), com ranking, detalhe por orcamento (preco praticado, tipo de cliente, revisao do gestor) e ordenacao clicavel nas colunas.
+
 ### Parametros disponiveis
 
 - `-Ambiente Teste|Producao` — define a pasta sincronizada do SharePoint de destino
 - `-StartDate YYYY-MM-DD` — define a data inicial da extracao
 - `-EndDate YYYY-MM-DD` — define a data final da extracao
 - `-NoSharePoint` — gera o JSON final apenas localmente, sem copiar para a pasta sincronizada
-- `-NoPublicarDashboard` — gera o `.js` do dashboard apenas localmente, sem copiar para `dashboard_analise_funil_publish_dir` (não afeta a publicação pública via GitHub Pages)
+- `-NoPublicarDashboard` — gera os `.js` do dashboard (Resumo Atual, Comparativo e Top Itens) apenas localmente, sem copiar para `dashboard_analise_funil_publish_dir` (não afeta a publicação pública via GitHub Pages)
 
 ### Comportamento padrao
 
@@ -543,25 +563,25 @@ Abra `C:\analise_funil\logs\` — cada execucao (dos fluxos ou da limpeza) gera 
 
 ## 10. Publicacao publica (GitHub Pages)
 
-O dashboard interativo (`Dashboard Analise Funil\dashboard_analise_funil.dc.html`, com os cards `Resumo Atual` e `Comparativo`) tem uma versao publicada de verdade, acessivel por link, sem precisar estar na maquina local.
+O dashboard interativo (`Dashboard Analise Funil\dashboard_analise_funil.dc.html`, com as abas `Resumo Atual`, `Comparativo` e `Top Itens`) tem uma versao publicada de verdade, acessivel por link, sem precisar estar na maquina local.
 
 ### Como funciona
 
-- Os dois `.ps1` (`rodar_fluxo_funil.ps1` e `rodar_fluxo_comparativo_funil.ps1`) copiam o `.js` gerado a cada rodada (`resumo_insight_dashboard.js` / `comparativo_dashboard.js`) pra pasta configurada em `paths.dashboard_analise_funil_publish_dir` (pasta do SharePoint) — a menos que `-NoPublicarDashboard` seja informado.
+- `rodar_fluxo_funil.ps1` copia `resumo_insight_dashboard.js` e `top_itens_dashboard.js`; `rodar_fluxo_comparativo_funil.ps1` copia `comparativo_dashboard.js` — os 3 gerados a cada rodada e copiados pra pasta configurada em `paths.dashboard_analise_funil_publish_dir` (pasta do SharePoint) — a menos que `-NoPublicarDashboard` seja informado.
 - A pasta `docs\` na raiz do repositorio contem a versao publicavel do HTML (copia de `Dashboard Analise Funil\dashboard_analise_funil.dc.html`), hospedada via **GitHub Pages**.
-- Em vez de carregar os dados de um arquivo local (`./data/*.js`), o `docs\index.html` aponta os dois `<script src>` pra **URLs de compartilhamento do SharePoint** dos arquivos publicados.
+- Em vez de carregar os dados de um arquivo local (`./data/*.js`), o `docs\index.html` aponta os 3 `<script src>` (`comparativo_dashboard.js`, `resumo_insight_dashboard.js`, `top_itens_dashboard.js`) pra **URLs de compartilhamento do SharePoint** dos arquivos publicados.
 - Isso funciona porque uma tag `<script src>` nao passa pelas travas de CORS que um `fetch()` teria — o navegador carrega o arquivo como um recurso normal, e o cookie de sessao do SharePoint e enviado junto. Resultado: **o link e publico, mas os dados so aparecem pra quem estiver logado na conta Microsoft da empresa** — sem login, o SharePoint bloqueia e nenhum dado carrega.
-- Se os dados nao carregarem (falha de login, link expirado, etc.), a pagina mostra um modal explicando que e preciso estar logado, com um botao pra recarregar depois de logar.
+- Se qualquer uma das 3 fontes nao carregar (falha de login, link expirado, etc.), a pagina mostra um modal explicando que e preciso estar logado, com um botao pra recarregar depois de logar. O dashboard fica com `visibility:hidden` ate as 3 fontes confirmarem sucesso — assim nunca aparece um flash do layout sem dado antes do modal.
 
 ### O que isso depende
 
-- Os `.ps1` continuarem publicando os dois `.js` em `dashboard_analise_funil_publish_dir` a cada rodada — sem isso, a pagina publica fica com dado desatualizado.
+- Os `.ps1` continuarem publicando os 3 `.js` em `dashboard_analise_funil_publish_dir` a cada rodada — sem isso, a pagina publica fica com dado desatualizado.
 - Os links de compartilhamento do SharePoint embutidos no `docs\index.html` continuarem validos — se forem revogados/expirarem, e preciso gerar novos links e atualizar os `<script src>` no arquivo.
 - O GitHub Pages estar habilitado nas configuracoes do repositorio (Settings → Pages → Branch `main`, pasta `/docs`).
 
 ### Limitacao atual
 
-Como `docs\index.html` e uma copia estatica do `.dc.html`, qualquer mudanca visual feita no dashboard local precisa ser replicada manualmente em `docs\index.html` (trocando so os `<script src>` de volta pros links do SharePoint) pra a versao publica acompanhar.
+Como `docs\index.html` e uma copia estatica do `.dc.html`, qualquer mudanca visual feita no dashboard local precisa ser replicada manualmente em `docs\index.html` (trocando so os 3 `<script src>` de volta pros links do SharePoint, mais o bloco do modal de sem-acesso e o gate de `dashboardVisible`) pra a versao publica acompanhar.
 
 ## 11. Publicando uma mudanca de codigo
 
@@ -591,6 +611,8 @@ git diff --cached --name-only -z | xargs -0 grep -lI "erico.moraes\|BUNZL"
 - no fim de cada rodada os scripts exibem os principais arquivos gerados
 - desde a correcao do `.ultima_base_funil.json`, o Insight Funil e o Comparativo sempre nascem da mesma
   base de extracao (contanto que o Comparativo rode ate 6h depois do Insight Funil)
+- a aba `Top Itens` do dashboard (secao 1 e 10) nao depende do step 2 (`itens_perdas`) nem e afetada por
+  `-SkipItensPerdas` — a remocao de ruido e feita internamente pelo proprio `gerar_top_itens_json.py`
 - a rodada diaria (seg-sex, 08:15) roda sozinha via Agendador de Tarefas do Windows, chamando
   `rodar_fluxos_diarios.ps1`; a limpeza de arquivos antigos roda mensalmente (dia 1, 07:00) — ver secao 9
 - a identidade do Git usada nos commits deve ser `Erico Casarano <erico.casarano@exemplo.com>` — se um

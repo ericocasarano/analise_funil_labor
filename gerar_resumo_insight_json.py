@@ -292,6 +292,11 @@ def build_summary(
     valor_enviado_numero = float(metrics.get("Valor Enviado", 0) or 0)
     qtd_faturados = int(round(float(metrics.get("Qtd Faturados", 0))))
     valor_faturado_numero = float(metrics.get("Valor Faturado", 0) or 0)
+
+    qtd_enviados_data_faturamento = int(round(float(metrics_data_fat.get("Qtd Enviados", 0) or 0)))
+    valor_enviado_numero_data_faturamento = float(metrics_data_fat.get("Valor Enviado", 0) or 0)
+    qtd_faturados_data_faturamento = int(round(float(metrics_data_fat.get("Qtd Faturados", 0) or 0)))
+    valor_faturado_numero_data_faturamento = float(metrics_data_fat.get("Valor Faturado", 0) or 0)
     qtd_nao_convertidas = int(round(float(get_metric(metrics, "Nao Convertidas (Qtd)", "Perdas (Qtd)"))))
     valor_nao_convertido_numero = float(
         get_metric(metrics, "Nao Convertidas (Valor)", "Perdas (Valor)") or 0
@@ -359,6 +364,14 @@ def build_summary(
         "win_rate_valor_data_faturamento_numero": float(
             metrics_data_fat.get("Win Rate (Valor) %", 0) or 0
         ),
+        "qtd_enviados_data_faturamento": qtd_enviados_data_faturamento,
+        "qtd_enviados_data_faturamento_fmt": format_int(qtd_enviados_data_faturamento),
+        "valor_enviado_data_faturamento": format_money_short(valor_enviado_numero_data_faturamento),
+        "valor_enviado_numero_data_faturamento": valor_enviado_numero_data_faturamento,
+        "qtd_faturados_data_faturamento": qtd_faturados_data_faturamento,
+        "qtd_faturados_data_faturamento_fmt": format_int(qtd_faturados_data_faturamento),
+        "valor_faturado_data_faturamento": format_money_short(valor_faturado_numero_data_faturamento),
+        "valor_faturado_numero_data_faturamento": valor_faturado_numero_data_faturamento,
         "em_aberto": resumo_aberto,
         "perdido": resumo_perdido,
     }

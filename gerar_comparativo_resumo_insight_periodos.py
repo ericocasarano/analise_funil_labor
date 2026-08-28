@@ -40,6 +40,14 @@ FIELDS_TO_COPY = [
     "win_rate_qtd_data_faturamento_numero",
     "win_rate_valor_data_faturamento",
     "win_rate_valor_data_faturamento_numero",
+    "qtd_enviados_data_faturamento",
+    "qtd_enviados_data_faturamento_fmt",
+    "valor_enviado_data_faturamento",
+    "valor_enviado_numero_data_faturamento",
+    "qtd_faturados_data_faturamento",
+    "qtd_faturados_data_faturamento_fmt",
+    "valor_faturado_data_faturamento",
+    "valor_faturado_numero_data_faturamento",
 ]
 
 
@@ -156,6 +164,10 @@ def build_comparison_metrics(a: dict, b: dict) -> dict:
         ("win_rate_valor_numero", "win_rate_valor"),
         ("win_rate_qtd_data_faturamento_numero", "win_rate_quantidade_data_faturamento"),
         ("win_rate_valor_data_faturamento_numero", "win_rate_valor_data_faturamento"),
+        ("qtd_enviados_data_faturamento", "quantidade_enviada_data_faturamento"),
+        ("valor_enviado_numero_data_faturamento", "valor_enviado_data_faturamento"),
+        ("qtd_faturados_data_faturamento", "quantidade_faturada_data_faturamento"),
+        ("valor_faturado_numero_data_faturamento", "valor_faturado_data_faturamento"),
         ("ticket_medio_gerado_numero", "ticket_medio_gerado"),
         ("ticket_medio_convertido_numero", "ticket_medio_convertido"),
         ("ticket_medio_nao_convertido_numero", "ticket_medio_nao_convertido"),
