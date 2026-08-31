@@ -17,6 +17,9 @@ TARGET_COLUMNS = [
     "Quantidade",
     "Valor",
     "VlTot",
+    "PrecoTabela",
+    "PrecoPromocao",
+    "ValorSugerido",
 ]
 
 RENAME_MAP = {
@@ -41,10 +44,18 @@ RENAME_MAP = {
     "Valor": "Valor",
     "VlTot": "VlTot",
     "Valor Total": "VlTot",
+    "PrecoTabela": "PrecoTabela",
+    "Preco Tabela": "PrecoTabela",
+    "Preço Tabela": "PrecoTabela",
+    "PrecoPromocao": "PrecoPromocao",
+    "Preco Promocao": "PrecoPromocao",
+    "Preço Promoção": "PrecoPromocao",
+    "ValorSugerido": "ValorSugerido",
+    "Valor Sugerido": "ValorSugerido",
 }
 
 INTEGER_COLUMNS = ["IDOrcamentoPrinc"]
-DECIMAL_COLUMNS = ["Quantidade", "Valor", "VlTot"]
+DECIMAL_COLUMNS = ["Quantidade", "Valor", "VlTot", "PrecoTabela", "PrecoPromocao", "ValorSugerido"]
 
 
 def parse_args():

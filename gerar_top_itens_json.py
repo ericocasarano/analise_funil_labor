@@ -190,13 +190,32 @@ def main():
 
     _, working_df, _ = remover_ruido(df_periodo, mapa_codes, args.delta_horas, args.sim_min)
 
-    tabela = gerar_resumo_todos_itens(itens, working_df)
+    try:
+        tabela = gerar_resumo_todos_itens(itens, working_df)
+    except ValueError:
+        # Periodo sem oportunidades ainda (ex.: logo apos a virada do mes comercial).
+        # Nao e um erro do pipeline: gera um bloco vazio em vez de derrubar a rodada inteira.
+        print(
+            "Aviso: nenhum item encontrado no periodo apos a remocao de ruido. "
+            "Gerando JSON de top itens vazio."
+        )
+        tabela = None
+
+    bloco_vazio = {
+        "top5_quantidade": [],
+        "top5_volume": [],
+        "top5_valor": [],
+        "concentracao_top5_valor_pct": 0.0,
+        "valor_total": 0.0,
+        "valor_total_fmt": format_money_short(0),
+        "total_itens": 0,
+    }
 
     resultado = {
         "atualizado_em": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "periodo": f"{commercial_start:%d/%m/%Y} a {end_date:%d/%m/%Y}",
-        "faturados": montar_ranking_bloco(tabela, itens, working_df, "Faturado"),
-        "perdas": montar_ranking_bloco(tabela, itens, working_df, "Enviados_Cliente_Nao_Aprovado"),
+        "faturados": montar_ranking_bloco(tabela, itens, working_df, "Faturado") if tabela is not None else bloco_vazio,
+        "perdas": montar_ranking_bloco(tabela, itens, working_df, "Enviados_Cliente_Nao_Aprovado") if tabela is not None else bloco_vazio,
     }
 
     if args.output:
