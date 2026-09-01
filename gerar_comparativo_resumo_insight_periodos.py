@@ -112,7 +112,8 @@ def resolve_input_files(args, alertas_dir: Path) -> tuple[Path, Path]:
 
 def pct_change(base: float, current: float) -> float | None:
     if base == 0:
-        return None
+        # 0 -> 0 e uma variacao real (sem mudanca); 0 -> N e indefinida (crescimento infinito).
+        return 0.0 if current == 0 else None
     return ((current - base) / base) * 100.0
 
 

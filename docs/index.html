@@ -521,18 +521,29 @@ class Component extends DCLogic {
     if(num) num.dataset.count = String(pct);
   }
 
-  setDeltaChip(id, rawValue, formatter, goodWhenPositive = true){
+  setDeltaChip(id, rawValue, formatter, goodWhenPositive = true, darkCard = false){
     const el = document.getElementById(id);
-    if(!el || rawValue === undefined || rawValue === null) return;
+    if(!el || rawValue === undefined) return;
+    if(rawValue === null){
+      el.textContent = 'Novo';
+      el.style.color = darkCard ? '#C7D3F5' : '#7C88A6';
+      el.style.background = darkCard ? 'rgba(0,0,0,0.18)' : '#F0F2F8';
+      return;
+    }
     const num = Number(rawValue);
     el.textContent = formatter.call(this, num);
     if(num === 0){
-      el.style.color = '#7C88A6';
-      el.style.background = '#F0F2F8';
+      el.style.color = darkCard ? '#C7D3F5' : '#7C88A6';
+      el.style.background = darkCard ? 'rgba(0,0,0,0.18)' : '#F0F2F8';
       return;
     }
     const positive = num >= 0;
     const good = positive ? goodWhenPositive : !goodWhenPositive;
+    if(darkCard){
+      el.style.color = good ? '#B6F0CF' : '#FFC9B3';
+      el.style.background = 'rgba(0,0,0,0.18)';
+      return;
+    }
     el.style.color = good ? '#1F8A5B' : '#C2410C';
     el.style.background = good ? '#E7F5EE' : '#FCEEE2';
   }
@@ -573,23 +584,23 @@ class Component extends DCLogic {
 
     this.setRing('fat-cur-wr-val-ring', 'fat-cur-wr-val', br.win_rate_valor_data_faturamento_numero);
     this.setText('fat-prev-wr-val', `Ant. ${ar.win_rate_valor_data_faturamento || '-'}`);
-    this.setDeltaChip('fat-cur-wr-val-delta', m.win_rate_valor_data_faturamento?.variacao_absoluta, this.fmtPp, true);
+    this.setDeltaChip('fat-cur-wr-val-delta', m.win_rate_valor_data_faturamento?.variacao_absoluta, this.fmtPp, true, true);
     this.setRing('fat-cur-wr-qtd-ring', 'fat-cur-wr-qtd', br.win_rate_qtd_data_faturamento_numero);
     this.setText('fat-prev-wr-qtd', `Ant. ${ar.win_rate_qtd_data_faturamento || '-'}`);
-    this.setDeltaChip('fat-cur-wr-qtd-delta', m.win_rate_quantidade_data_faturamento?.variacao_absoluta, this.fmtPp, true);
+    this.setDeltaChip('fat-cur-wr-qtd-delta', m.win_rate_quantidade_data_faturamento?.variacao_absoluta, this.fmtPp, true, true);
 
     this.setText('fat-cur-valor-enviado', this.fmtBrlFull(br.valor_enviado_numero_data_faturamento));
     this.setText('fat-prev-valor-enviado', this.fmtBrlFull(ar.valor_enviado_numero_data_faturamento));
-    this.setDeltaChip('fat-delta-valor-enviado', m.valor_enviado_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true);
+    this.setDeltaChip('fat-delta-valor-enviado', m.valor_enviado_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true, true);
     this.setText('fat-cur-valor-faturado', this.fmtBrlFull(br.valor_faturado_numero_data_faturamento));
     this.setText('fat-prev-valor-faturado', this.fmtBrlFull(ar.valor_faturado_numero_data_faturamento));
-    this.setDeltaChip('fat-delta-valor-faturado', m.valor_faturado_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true);
+    this.setDeltaChip('fat-delta-valor-faturado', m.valor_faturado_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true, true);
     this.setText('fat-cur-qtd-enviados', br.qtd_enviados_data_faturamento_fmt);
     this.setText('fat-prev-qtd-enviados', ar.qtd_enviados_data_faturamento_fmt);
-    this.setDeltaChip('fat-delta-qtd-enviados', m.quantidade_enviada_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true);
+    this.setDeltaChip('fat-delta-qtd-enviados', m.quantidade_enviada_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true, true);
     this.setText('fat-cur-qtd-faturados', br.qtd_faturados_data_faturamento_fmt);
     this.setText('fat-prev-qtd-faturados', ar.qtd_faturados_data_faturamento_fmt);
-    this.setDeltaChip('fat-delta-qtd-faturados', m.quantidade_faturada_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true);
+    this.setDeltaChip('fat-delta-qtd-faturados', m.quantidade_faturada_data_faturamento?.variacao_percentual, this.fmtDeltaPct, true, true);
   }
 
   applyResumoAtualData(){
