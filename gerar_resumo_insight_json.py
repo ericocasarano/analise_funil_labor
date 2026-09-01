@@ -253,6 +253,24 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
         (c for c in work.columns if "tipo" in c.lower() and "cliente" in c.lower()), None
     )
 
+    def montar_linha_orcamento(row) -> dict:
+        orc_id = int(row["ID_Orcamento"]) if pd.notna(row["ID_Orcamento"]) else None
+        data_criacao = row.get("Data")
+        revisao_valor = row.get(col_revisao_gestor) if col_revisao_gestor else None
+        tipo_cliente = str(row.get(col_tipo_cliente, "") or "").strip() if col_tipo_cliente else ""
+        return {
+            "orcamento": format_budget_id(row["ID_Orcamento"]),
+            "vendedor": str(row["Vendedor"]).strip(),
+            "cliente": str(row["Cliente"]).strip(),
+            "tipo_cliente": tipo_cliente,
+            "valor": format_money_short(row["Valor"]),
+            "valor_numero": float(row["Valor"]),
+            "status": display_map.get(row["Status_Norm"], str(row["Status Atual"]).strip()),
+            "data_criacao": data_criacao.strftime("%d/%m/%Y") if pd.notna(data_criacao) else "-",
+            "revisao_gestor": bool(pd.notna(revisao_valor) and float(revisao_valor) == 1),
+            "itens": itens_por_orcamento.get(orc_id, []),
+        }
+
     display_map = {normalize_text(src): display for src, display in STATUS_GROUPS[group_key]}
     target_norms = list(display_map.keys())
     subset = work[work["Status_Norm"].isin(target_norms)].copy()
@@ -270,6 +288,9 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
             .sort_values("valor_total", ascending=False)
         )
         for status_norm, row in totals.iterrows():
+            orcamentos_status = subset[subset["Status_Norm"] == status_norm].sort_values(
+                "Valor", ascending=False
+            )
             status_totals.append(
                 {
                     "status": display_map.get(status_norm, status_norm),
@@ -277,29 +298,13 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
                     "quantidade_fmt": format_int(row["quantidade"]),
                     "valor": format_money_short(row["valor_total"]),
                     "valor_numero": float(row["valor_total"]),
+                    "orcamentos": [montar_linha_orcamento(r) for _, r in orcamentos_status.iterrows()],
                 }
             )
 
         top_rows = subset.sort_values("Valor", ascending=False).head(5)
         for _, row in top_rows.iterrows():
-            orc_id = int(row["ID_Orcamento"]) if pd.notna(row["ID_Orcamento"]) else None
-            data_criacao = row.get("Data")
-            revisao_valor = row.get(col_revisao_gestor) if col_revisao_gestor else None
-            tipo_cliente = str(row.get(col_tipo_cliente, "") or "").strip() if col_tipo_cliente else ""
-            top_orcamentos.append(
-                {
-                    "orcamento": format_budget_id(row["ID_Orcamento"]),
-                    "vendedor": str(row["Vendedor"]).strip(),
-                    "cliente": str(row["Cliente"]).strip(),
-                    "tipo_cliente": tipo_cliente,
-                    "valor": format_money_short(row["Valor"]),
-                    "valor_numero": float(row["Valor"]),
-                    "status": display_map.get(row["Status_Norm"], str(row["Status Atual"]).strip()),
-                    "data_criacao": data_criacao.strftime("%d/%m/%Y") if pd.notna(data_criacao) else "-",
-                    "revisao_gestor": bool(pd.notna(revisao_valor) and float(revisao_valor) == 1),
-                    "itens": itens_por_orcamento.get(orc_id, []),
-                }
-            )
+            top_orcamentos.append(montar_linha_orcamento(row))
 
     principal = status_totals[0] if status_totals else {
         "status": "",
@@ -315,6 +320,7 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
         "quantidade_fmt": "",
         "valor": "",
         "valor_numero": 0.0,
+        "orcamentos": [],
     }
     while len(status_totals) < 5:
         status_totals.append(empty_status.copy())
