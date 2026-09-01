@@ -92,6 +92,38 @@ Os envios podem ser separados por ambiente:
 - Pasta resumo: `Documentos\Teste\FunilInsights_teste`
 - Pasta comparativo: `Documentos\Teste\FunilComparativos_teste`
 
+## Regra de Remocao de Ruido (Recotacoes)
+
+Varios pontos do pipeline (`gerar_oportunidades_reais_codes.py`, usado pelo `Insight Funil`, `Comparativo` e `Resumo Mensal Historico`; `analisar_evolucao_diaria_item.py`, usado pela aba `Top Itens`) precisam distinguir uma oportunidade real de uma recotacao — quando o vendedor cria um novo orcamento pra mesma negociacao em vez de reaproveitar o orcamento anterior (ex.: cliente pede ajuste, ou so demora a decidir). Sem esse tratamento, a mesma negociacao contaria como "1 perda + 1 faturado" em vez de 1 negociacao so.
+
+### Agrupamento (cluster)
+
+Orcamentos do mesmo vendedor + mesmo cliente (CNPJ), proximos no tempo (ate `--delta_horas`, padrao 360h / 15 dias) e com itens parecidos (similaridade Jaccard >= `--sim_min`, padrao 0.50), sao agrupados no mesmo cluster — tratados como a mesma negociacao sendo reorcada.
+
+A ordem usada pra saber quem vem "antes"/"depois" dentro do cluster (e pra medir a janela de tempo) e sempre a **Data de Criacao** do orcamento — nunca a Data de Faturamento. Faz sentido porque recotacao e um evento de criacao (o vendedor emitiu um orcamento novo); `Faturou` e so uma bandeira de resultado (sim/nao) de cada orcamento, nao um segundo eixo do tempo.
+
+### Regra por segmento
+
+Dentro do cluster (ja ordenado por Data de Criacao), a sequencia e cortada em segmentos a cada orcamento faturado — um faturado sempre fecha a negociacao ate aquele ponto.
+
+- **Segmento termina em faturado**: esse orcamento conta sempre (enviado + faturado). Tudo que veio antes dele, no mesmo segmento, e ruido — foram versoes descartadas da mesma negociacao que fechou por essa via.
+- **Segmento sem faturado** (so acontece no trecho final do cluster, depois do ultimo faturado, ou quando nada faturou ainda): conta so o **mais recente** desse trecho como a oportunidade em aberto atual; os anteriores dele sao ruido — rascunhos ja substituidos por uma versao mais nova da mesma negociacao, ainda sem veredito.
+
+Em uma frase: **um orcamento so vira ruido se existir, no mesmo cluster, um orcamento POSTERIOR (ou no mesmo instante) que faturou.** Um faturado anterior nao conta pra isso — um orcamento criado depois de uma negociacao ja fechada e avaliado do zero, como se fosse o inicio de um cluster novo (pode ser uma recompra/negociacao nova).
+
+Exemplo real (cluster de recompras do mesmo cliente):
+
+| Orcamento | Data de Criacao | Faturou | Resultado |
+|---|---|---|---|
+| 611593 | 31/07 | Sim | Oportunidade real (faturado) |
+| 613419 | 11/08 | Sim | Oportunidade real (faturado) |
+| 615315 | 21/08 | Sim | Oportunidade real (faturado) |
+| 617298 | 31/08 | Nao | Oportunidade real (em aberto) — nenhum faturado depois dele |
+
+### Uma unica classificacao para as duas visoes (Data de Criacao / Data de Faturamento)
+
+A remocao de ruido roda **uma unica vez**, sempre sobre o historico completo (nao isolada por periodo) — assim uma recotacao e reconhecida mesmo quando a negociacao original ficou fora da janela analisada. As visoes "Data de Criacao" e "Data de Faturamento" (ver "Observacao sobre win rate" abaixo) usam essa mesma classificacao de ruido; diferem so em qual data seleciona quem entra no periodo atual, nao em quem e ruido.
+
 ## 1. Fluxo Principal da Rodada (Insight Funil)
 
 Objetivo: gerar o JSON final do resumo executivo do funil e enviar para a pasta de teste ou producao, de onde o Power Automate publica o Adaptive Card no Teams.
@@ -198,14 +230,14 @@ A media ponderada permanece disponivel como referencia financeira/volume.
 
 ### Observacao sobre win rate
 
-- o win rate atual do funil continua baseado na `Data de Criacao`
+- o win rate principal do funil e baseado na `Data de Criacao`
 - o pipeline tambem calcula um win rate adicional por `Data de Faturamento`
 - nesse segundo recorte, a data considerada por oportunidade e:
   - `Data de Faturamento`, quando existir
   - `Data de Criacao`, quando a data de faturamento estiver em branco
 - para auditoria desse segundo recorte, o Excel gera a aba `Lista_WR_Data_Fat`
-- `Comparativo_Geral_Total` permanece com a leitura original por data de criacao
-- a leitura adicional fica separada na aba `Comp_Geral_Total_Data_Fat`
+- as duas leituras compartilham a mesma classificacao de ruido (ver "Regra de Remocao de Ruido" no topo do documento) — diferem so em qual data seleciona quem entra no periodo, nao em quem e ruido
+- `Comparativo_Geral_Total` traz a leitura por data de criacao; `Comp_Geral_Total_Data_Fat` traz a leitura por data de faturamento
 
 ### Regra de mes comercial no fluxo principal
 

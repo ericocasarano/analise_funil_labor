@@ -316,24 +316,34 @@ def build_clustered_funil(df: pd.DataFrame, mapa_codes: dict[int, set], delta_ho
 
     for (_, _, _), grp in base.groupby(["Vendedor", "CNPJ", "Cluster_ID"], sort=False):
         tem_faturado = int((grp["Faturou"] == 1).any())
-        last_idx = grp.index[-1]
         last_id = grp.iloc[-1]["ID_Orcamento"]
 
         base.loc[grp.index, "Cluster_Tem_Faturado"] = tem_faturado
         base.loc[grp.index, "ID_Ultimo_Cluster"] = last_id
 
-        idx_faturados = grp.index[grp["Faturou"] == 1].tolist()
-        idx_nao_faturados = grp.index[grp["Faturou"] == 0].tolist()
+        # Um cluster e' cortado em segmentos a cada faturado: tudo que vem
+        # ANTES de um faturado, dentro do mesmo segmento, foi superado por ele
+        # (recotacao da mesma negociacao) e vira ruido. Um orcamento criado
+        # DEPOIS de um faturado inicia um segmento novo - nao e' mais a mesma
+        # negociacao (que ja fechou), entao e' avaliado de forma independente.
+        segmento = []
+        for idx, faturou in zip(grp.index, grp["Faturou"]):
+            segmento.append(idx)
+            if faturou == 1:
+                base.loc[idx, "Oportunidade_Real"] = 1
+                anteriores = segmento[:-1]
+                if anteriores:
+                    base.loc[anteriores, "Ruido"] = 1
+                    base.loc[anteriores, "Motivo_Ruido"] = "Superado por faturado posterior no mesmo cluster"
+                segmento = []
 
-        if len(idx_faturados) > 0:
-            base.loc[idx_faturados, "Oportunidade_Real"] = 1
-            base.loc[idx_nao_faturados, "Ruido"] = 1
-            base.loc[idx_nao_faturados, "Motivo_Ruido"] = "Mesmo cluster com faturado (outro(s) faturou/faturaram)"
-        else:
+        if segmento:
+            last_idx = segmento[-1]
             base.loc[last_idx, "Oportunidade_Real"] = 1
-            noise_idxs = grp.index.difference([last_idx])
-            base.loc[noise_idxs, "Ruido"] = 1
-            base.loc[noise_idxs, "Motivo_Ruido"] = "Sem faturado no cluster e nÃ£o Ã© o Ãºltimo do cluster"
+            anteriores = segmento[:-1]
+            if anteriores:
+                base.loc[anteriores, "Ruido"] = 1
+                base.loc[anteriores, "Motivo_Ruido"] = "Sem faturado no cluster e nÃ£o Ã© o Ãºltimo do cluster"
 
     base["Valor_Faturado"] = np.where(base["Faturou"] == 1, base["Valor"], 0.0)
     base["Valor_Ruido"] = np.where(base["Ruido"] == 1, base["Valor"], 0.0)
@@ -586,29 +596,31 @@ def main():
         for oid, sub in itens.groupby("IDOrcamentoPrinc")
     }
 
-    df_periodo_criacao = apply_date_filter(df, "Data", args.start, args.end)
-    base, oportunidades, ruidos = build_clustered_funil(
-        df_periodo_criacao,
-        mapa_codes,
-        args.delta_horas,
-        args.sim_min,
-    )
-    perdas_reais = oportunidades[oportunidades["Faturou"] == 0].copy()
-
-    base_ref_full, oportunidades_ref_full, _ = build_clustered_funil(
+    # A remocao de ruido roda uma unica vez sobre o historico completo (nao so
+    # sobre a fatia do periodo), para que uma recotacao seja reconhecida mesmo
+    # quando a negociacao original ficou fora da janela analisada. As duas
+    # visoes (Data de Criacao / Data de Faturamento) diferem apenas em qual
+    # coluna de data seleciona quem pertence ao periodo atual.
+    base_full, oportunidades_full, ruidos_full = build_clustered_funil(
         df,
         mapa_codes,
         args.delta_horas,
         args.sim_min,
     )
+
+    base = apply_date_filter(base_full, "Data", args.start, args.end)
+    oportunidades = apply_date_filter(oportunidades_full, "Data", args.start, args.end)
+    ruidos = apply_date_filter(ruidos_full, "Data", args.start, args.end)
+    perdas_reais = oportunidades[oportunidades["Faturou"] == 0].copy()
+
     base_ref_periodo = apply_date_filter(
-        base_ref_full,
+        base_full,
         "Data_Referencia_WR_Faturamento",
         args.start,
         args.end,
     )
     oportunidades_ref_periodo = apply_date_filter(
-        oportunidades_ref_full,
+        oportunidades_full,
         "Data_Referencia_WR_Faturamento",
         args.start,
         args.end,

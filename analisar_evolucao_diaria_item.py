@@ -439,22 +439,33 @@ def remover_ruido(df: pd.DataFrame, mapa_codes: dict, delta_horas: float, sim_mi
     base["Orcamento_Considerado_Cluster"] = ""
 
     for _, grp in base.groupby(["Vendedor", "CNPJ", "Cluster_ID"], sort=False):
-        idx_faturados = grp.index[grp["Faturou"] == 1].tolist()
-        idx_nao_faturados = grp.index[grp["Faturou"] == 0].tolist()
-        if idx_faturados:
-            referencia = ", ".join(str(v) for v in grp.loc[idx_faturados, "Num_Orcamento"])
-            base.loc[idx_faturados, "Oportunidade_Real"] = 1
-            base.loc[idx_nao_faturados, "Ruido"] = 1
-            base.loc[idx_nao_faturados, "Motivo_Ruido"] = "Mesmo cluster com orcamento(s) faturado(s)"
-            base.loc[idx_nao_faturados, "Orcamento_Considerado_Cluster"] = referencia
-        else:
-            last_idx = grp.index[-1]
+        # Um cluster e cortado em segmentos a cada faturado: tudo que vem ANTES
+        # de um faturado, dentro do mesmo segmento, foi superado por ele
+        # (recotacao da mesma negociacao) e vira ruido. Um orcamento criado
+        # DEPOIS de um faturado inicia um segmento novo - nao e mais a mesma
+        # negociacao (que ja fechou), entao e avaliado de forma independente.
+        segmento = []
+        for idx, faturou in zip(grp.index, grp["Faturou"]):
+            segmento.append(idx)
+            if faturou == 1:
+                referencia = str(grp.loc[idx, "Num_Orcamento"])
+                base.loc[idx, "Oportunidade_Real"] = 1
+                anteriores = segmento[:-1]
+                if anteriores:
+                    base.loc[anteriores, "Ruido"] = 1
+                    base.loc[anteriores, "Motivo_Ruido"] = "Mesmo cluster com orcamento(s) faturado(s)"
+                    base.loc[anteriores, "Orcamento_Considerado_Cluster"] = referencia
+                segmento = []
+
+        if segmento:
+            last_idx = segmento[-1]
             referencia = str(grp.loc[last_idx, "Num_Orcamento"])
             base.loc[last_idx, "Oportunidade_Real"] = 1
-            noise_idx = grp.index.difference([last_idx])
-            base.loc[noise_idx, "Ruido"] = 1
-            base.loc[noise_idx, "Motivo_Ruido"] = "Sem faturado no cluster; considerado apenas o ultimo orcamento (recotacao mais recente)"
-            base.loc[noise_idx, "Orcamento_Considerado_Cluster"] = referencia
+            anteriores = segmento[:-1]
+            if anteriores:
+                base.loc[anteriores, "Ruido"] = 1
+                base.loc[anteriores, "Motivo_Ruido"] = "Sem faturado no cluster; considerado apenas o ultimo orcamento (recotacao mais recente)"
+                base.loc[anteriores, "Orcamento_Considerado_Cluster"] = referencia
 
     oportunidades = base[base["Oportunidade_Real"] == 1].copy()
     ruidos = base[base["Ruido"] == 1].copy()
