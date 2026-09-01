@@ -721,13 +721,15 @@ class Component extends DCLogic {
     this.setText('ti-env-concentracao', fmtPct1(data.perdas?.concentracao_top5_valor_pct));
     this.setText('ti-env-concentracao-contexto', data.perdas ? `Total enviado, não aprovado: ${data.perdas.valor_total_fmt} em ${data.perdas.total_itens} itens` : '-');
 
-    const fatLider = data.faturados?.top5_valor?.[0];
+    const fatLiderRaw = data.faturados?.top5_valor?.[0];
+    const fatLider = fatLiderRaw && fatLiderRaw.valor_numero > 0 ? fatLiderRaw : null;
     this.setText('ti-fat-lider-codigo', fatLider ? fatLider.codigo : '-');
-    this.setText('ti-fat-lider-nome', fatLider ? fatLider.descricao : '-');
+    this.setText('ti-fat-lider-nome', fatLider ? fatLider.descricao : 'Nenhum item faturado ainda');
     this.setText('ti-fat-lider-valor', fatLider ? fatLider.valor : '-');
-    const envLider = data.perdas?.top5_valor?.[0];
+    const envLiderRaw = data.perdas?.top5_valor?.[0];
+    const envLider = envLiderRaw && envLiderRaw.valor_numero > 0 ? envLiderRaw : null;
     this.setText('ti-env-lider-codigo', envLider ? envLider.codigo : '-');
-    this.setText('ti-env-lider-nome', envLider ? envLider.descricao : '-');
+    this.setText('ti-env-lider-nome', envLider ? envLider.descricao : 'Nenhum item não aprovado ainda');
     this.setText('ti-env-lider-valor', envLider ? envLider.valor : '-');
 
     const preencherCard = (prefixo, lista, valorFn, destaqueFn) => {
