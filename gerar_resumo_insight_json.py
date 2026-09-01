@@ -108,7 +108,11 @@ def load_itens_por_orcamento(itens_path: Path | None) -> dict:
             valor_item = float(row.get("VlTot", 0) or 0)
             quantidade_item = float(row.get("Quantidade", 0) or 0)
             preco_tabela = float(row.get("PrecoTabela", 0) or 0)
+            preco_promocao = float(row.get("PrecoPromocao", 0) or 0)
             preco_praticado = valor_item / quantidade_item if quantidade_item > 0 else 0.0
+            desconto_pct = (
+                (preco_tabela - preco_praticado) / preco_tabela * 100 if preco_tabela > 0 else 0.0
+            )
             linhas.append(
                 {
                     "codigo": str(row.get("CodigoErp", "") or "").strip(),
@@ -116,7 +120,11 @@ def load_itens_por_orcamento(itens_path: Path | None) -> dict:
                     "quantidade": quantidade_item,
                     "quantidade_fmt": format_int(row.get("Quantidade", 0)),
                     "preco_tabela": format_money_short(preco_tabela),
+                    "preco_tabela_numero": preco_tabela,
+                    "preco_promocao": format_money_short(preco_promocao) if preco_promocao > 0 else "-",
                     "preco_praticado": format_money_short(preco_praticado),
+                    "preco_praticado_numero": preco_praticado,
+                    "desconto_pct": desconto_pct if preco_tabela > 0 else None,
                     "valor": format_money_short(valor_item),
                     "valor_numero": valor_item,
                 }
