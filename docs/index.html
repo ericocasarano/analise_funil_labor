@@ -680,7 +680,8 @@ class Component extends DCLogic {
           this.setText(`${prefixo}-nome-${i}`, `${item.codigo} - ${item.descricao || ''}`);
           this.setText(`${prefixo}-valor-${i}`, destaqueFn(item));
           const bar = document.getElementById(`${prefixo}-bar-${i}`);
-          if(bar) bar.style.width = Math.max(8, Math.round((valorFn(item) / max) * 100)) + '%';
+          const valorItem = valorFn(item) || 0;
+          if(bar) bar.style.width = (valorItem > 0 ? Math.max(8, Math.round((valorItem / max) * 100)) : 0) + '%';
           const btn = document.getElementById(`${prefixo}-btn-${i}`);
           const categoria = prefixo.startsWith('ti-fat') ? 'faturado' : 'perda';
           if(btn) btn.onclick = () => this.abrirModalItem(item, categoria);
