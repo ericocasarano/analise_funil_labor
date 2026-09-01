@@ -31,6 +31,12 @@ def parse_args():
     )
     parser.add_argument("--oportunidades", required=True, help="Arquivo oportunidades_reais_auto_...xlsx")
     parser.add_argument("--entrada-dax1", required=True, help="Arquivo dax_orcamentos_tratado_power_automate_...xlsx tratado em entrada/")
+    parser.add_argument(
+        "--itens",
+        default="",
+        help="Arquivo dax_itens_tratado_power_automate_...xlsx tratado em entrada/ (opcional). "
+        "Quando informado, anexa a lista de itens de cada orcamento do Top 3 em Aberto/Perdidos.",
+    )
     parser.add_argument("--start-date", default="", help="Periodo inicial solicitado no formato YYYY-MM-DD.")
     parser.add_argument("--end-date", default="", help="Periodo final solicitado no formato YYYY-MM-DD.")
     parser.add_argument(
@@ -86,6 +92,37 @@ def format_money_short(value) -> str:
     if abs(val) >= 1_000:
         return f"R$ {val / 1_000:.0f} Mil".replace(".", ",")
     return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def load_itens_por_orcamento(itens_path: Path | None) -> dict:
+    if not itens_path:
+        return {}
+    itens_df = pd.read_excel(itens_path)
+    itens_df["IDOrcamentoPrinc"] = pd.to_numeric(itens_df["IDOrcamentoPrinc"], errors="coerce")
+    itens_df = itens_df.dropna(subset=["IDOrcamentoPrinc"])
+
+    resultado: dict = {}
+    for orc_id, grupo in itens_df.groupby("IDOrcamentoPrinc"):
+        linhas = []
+        for _, row in grupo.iterrows():
+            valor_item = float(row.get("VlTot", 0) or 0)
+            quantidade_item = float(row.get("Quantidade", 0) or 0)
+            preco_tabela = float(row.get("PrecoTabela", 0) or 0)
+            preco_praticado = valor_item / quantidade_item if quantidade_item > 0 else 0.0
+            linhas.append(
+                {
+                    "codigo": str(row.get("CodigoErp", "") or "").strip(),
+                    "descricao": str(row.get("Descricao", "") or "").strip(),
+                    "quantidade": quantidade_item,
+                    "quantidade_fmt": format_int(row.get("Quantidade", 0)),
+                    "preco_tabela": format_money_short(preco_tabela),
+                    "preco_praticado": format_money_short(preco_praticado),
+                    "valor": format_money_short(valor_item),
+                    "valor_numero": valor_item,
+                }
+            )
+        resultado[int(orc_id)] = sorted(linhas, key=lambda l: l["valor_numero"], reverse=True)
+    return resultado
 
 
 def format_ticket_short(value) -> str:
@@ -196,10 +233,14 @@ def resolve_title_period_date(
     return datetime.now()
 
 
-def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str) -> dict:
+def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_por_orcamento: dict | None = None) -> dict:
+    itens_por_orcamento = itens_por_orcamento or {}
     work = oportunidades_df.copy()
     work["Status_Norm"] = work["Status Atual"].astype(str).map(normalize_text)
     work["Valor"] = pd.to_numeric(work["Valor"], errors="coerce").fillna(0)
+    col_revisao_gestor = next(
+        (c for c in work.columns if "revis" in c.lower() and "gestor" in c.lower()), None
+    )
 
     display_map = {normalize_text(src): display for src, display in STATUS_GROUPS[group_key]}
     target_norms = list(display_map.keys())
@@ -230,6 +271,9 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str) -> dict:
 
         top_rows = subset.sort_values("Valor", ascending=False).head(5)
         for _, row in top_rows.iterrows():
+            orc_id = int(row["ID_Orcamento"]) if pd.notna(row["ID_Orcamento"]) else None
+            data_criacao = row.get("Data")
+            revisao_valor = row.get(col_revisao_gestor) if col_revisao_gestor else None
             top_orcamentos.append(
                 {
                     "orcamento": format_budget_id(row["ID_Orcamento"]),
@@ -238,6 +282,9 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str) -> dict:
                     "valor": format_money_short(row["Valor"]),
                     "valor_numero": float(row["Valor"]),
                     "status": display_map.get(row["Status_Norm"], str(row["Status Atual"]).strip()),
+                    "data_criacao": data_criacao.strftime("%d/%m/%Y") if pd.notna(data_criacao) else "-",
+                    "revisao_gestor": bool(pd.notna(revisao_valor) and float(revisao_valor) == 1),
+                    "itens": itens_por_orcamento.get(orc_id, []),
                 }
             )
 
@@ -266,6 +313,9 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str) -> dict:
         "valor": "",
         "valor_numero": 0.0,
         "status": "",
+        "data_criacao": "",
+        "revisao_gestor": False,
+        "itens": [],
     }
     while len(top_orcamentos) < 5:
         top_orcamentos.append(empty_top.copy())
@@ -287,6 +337,7 @@ def build_summary(
     end_date: str = "",
     commercial_start_date: str = "",
     commercial_end_date: str = "",
+    itens_path: Path | None = None,
 ) -> dict:
     lista_oportunidades = pd.read_excel(oportunidades_path, sheet_name="Lista_Oportunidades_Reais")
     metrics = load_metric_sheet(oportunidades_path, "Comparativo_Geral_Total")
@@ -296,8 +347,9 @@ def build_summary(
         required=False,
     )
 
-    resumo_aberto = build_group_summary(lista_oportunidades, "em_aberto")
-    resumo_perdido = build_group_summary(lista_oportunidades, "perdido")
+    itens_por_orcamento = load_itens_por_orcamento(itens_path)
+    resumo_aberto = build_group_summary(lista_oportunidades, "em_aberto", itens_por_orcamento)
+    resumo_perdido = build_group_summary(lista_oportunidades, "perdido", itens_por_orcamento)
 
     qtd_enviados = int(round(float(metrics.get("Qtd Enviados", 0))))
     valor_enviado_numero = float(metrics.get("Valor Enviado", 0) or 0)
@@ -392,6 +444,7 @@ def main():
     args = parse_args()
     oportunidades_path = Path(args.oportunidades).resolve()
     entrada_dax1_path = Path(args.entrada_dax1).resolve()
+    itens_path = Path(args.itens).resolve() if args.itens else None
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = (
@@ -408,6 +461,7 @@ def main():
         end_date=args.end_date,
         commercial_start_date=args.commercial_start_date,
         commercial_end_date=args.commercial_end_date,
+        itens_path=itens_path,
     )
     output_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 

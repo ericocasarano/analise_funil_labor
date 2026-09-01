@@ -386,6 +386,7 @@ try {
     ".\gerar_resumo_insight_json.py",
     "--oportunidades", $oportunidadesGerado,
     "--entrada-dax1", $arquivoRuido,
+    "--itens", $arquivoItens,
     "--start-date", $effectiveStartDate,
     "--end-date", $effectiveEndDate,
     "--commercial-start-date", $commercialStartDate,

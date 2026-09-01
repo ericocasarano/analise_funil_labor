@@ -12,7 +12,7 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=quick_reference_all,article,inventory_2,paid,pie_chart,mood,mood_bad,how_to_reg,calendar_month,update,info" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=quick_reference_all,article,inventory_2,paid,pie_chart,mood,mood_bad,how_to_reg,calendar_month,update,info,person,flag" />
 <style>
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;vertical-align:middle;}
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -422,7 +422,7 @@
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:8px 22px;flex:1;min-height:0;align-content:start;"><div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:28px;padding:12px 18px;box-shadow:0 24px 60px rgba(24,38,90,0.08);display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;background:#F1F5FF;border-radius:12px;padding:6px 12px;"><span style="width:10px;height:10px;border-radius:50%;background:#2B50F0;"></span><span style="font-size:14px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#2B50F0;">Em aberto</span></div><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;"><span style="font-size:11px;font-weight:700;color:#9AA4BE;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;">Status com maior valor:</span><span id="rs-aberto-principal-status" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span></div><div style="display:flex;gap:18px;margin-top:3px;"><span id="rs-aberto-principal-qtd" class="tnum" style="font-size:22px;font-weight:700;color:#2B50F0;">-</span><span id="rs-aberto-principal-valor" class="tnum" style="font-size:22px;font-weight:700;color:#2B50F0;">-</span></div><div style="margin-top:6px;display:grid;grid-template-columns:1fr auto auto;gap:5px 16px;align-items:center;"><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Top 3 status em valor</span><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Qtd</span><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Valor</span><span id="rs-aberto-status-0" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-aberto-qtd-0" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-aberto-valor-0" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-aberto-status-1" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-aberto-qtd-1" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-aberto-valor-1" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-aberto-status-2" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-aberto-qtd-2" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-aberto-valor-2" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span></div></div>
-          <div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:28px;padding:12px 18px;box-shadow:0 24px 60px rgba(24,38,90,0.08);display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;background:#F2E1E3;border-radius:12px;padding:6px 12px;"><span style="width:10px;height:10px;border-radius:50%;background:#B34954;"></span><span style="font-size:14px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#B34954;">Perdido</span></div><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;"><span style="font-size:11px;font-weight:700;color:#9AA4BE;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;">Status com maior valor:</span><span id="rs-perdido-principal-status" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span></div><div style="display:flex;gap:18px;margin-top:3px;"><span id="rs-perdido-principal-qtd" class="tnum" style="font-size:22px;font-weight:700;color:#B34954;">-</span><span id="rs-perdido-principal-valor" class="tnum" style="font-size:22px;font-weight:700;color:#B34954;">-</span></div><div style="margin-top:6px;display:grid;grid-template-columns:1fr auto auto;gap:5px 16px;align-items:center;"><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Top 3 status em valor</span><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Qtd</span><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Valor</span><span id="rs-perdido-status-0" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-perdido-qtd-0" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-valor-0" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-status-1" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-perdido-qtd-1" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-valor-1" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-status-2" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-perdido-qtd-2" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-valor-2" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span></div></div><div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:20px;padding:12px 19px;box-shadow:0 12px 34px rgba(24,38,90,0.06);"><div style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#2B50F0;background:#F1F5FF;border-radius:8px;padding:5px 10px;margin-bottom:8px;">Top 3 em aberto</div><div style="display:grid;gap:7px;"><div><div style="display:flex;justify-content:space-between;gap:10px;"><span id="rs-top-aberto-orc-0" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-aberto-valor-0" class="tnum" style="font-size:15px;font-weight:700;color:#2B50F0;">-</span></div><div id="rs-top-aberto-meta-0" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;gap:10px;"><span id="rs-top-aberto-orc-1" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-aberto-valor-1" class="tnum" style="font-size:15px;font-weight:700;color:#2B50F0;">-</span></div><div id="rs-top-aberto-meta-1" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;gap:10px;"><span id="rs-top-aberto-orc-2" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-aberto-valor-2" class="tnum" style="font-size:15px;font-weight:700;color:#2B50F0;">-</span></div><div id="rs-top-aberto-meta-2" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div></div></div><div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:20px;padding:12px 19px;box-shadow:0 12px 34px rgba(24,38,90,0.06);"><div style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#B34954;background:#F2E1E3;border-radius:8px;padding:5px 10px;margin-bottom:8px;">Top 3 perdidos</div><div style="display:grid;gap:7px;"><div><div style="display:flex;justify-content:space-between;gap:10px;"><span id="rs-top-perdido-orc-0" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-perdido-valor-0" class="tnum" style="font-size:15px;font-weight:700;color:#B34954;">-</span></div><div id="rs-top-perdido-meta-0" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;gap:10px;"><span id="rs-top-perdido-orc-1" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-perdido-valor-1" class="tnum" style="font-size:15px;font-weight:700;color:#B34954;">-</span></div><div id="rs-top-perdido-meta-1" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;gap:10px;"><span id="rs-top-perdido-orc-2" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-perdido-valor-2" class="tnum" style="font-size:15px;font-weight:700;color:#B34954;">-</span></div><div id="rs-top-perdido-meta-2" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div></div></div></div>
+          <div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:28px;padding:12px 18px;box-shadow:0 24px 60px rgba(24,38,90,0.08);display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;background:#F2E1E3;border-radius:12px;padding:6px 12px;"><span style="width:10px;height:10px;border-radius:50%;background:#B34954;"></span><span style="font-size:14px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#B34954;">Perdido</span></div><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;"><span style="font-size:11px;font-weight:700;color:#9AA4BE;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;">Status com maior valor:</span><span id="rs-perdido-principal-status" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span></div><div style="display:flex;gap:18px;margin-top:3px;"><span id="rs-perdido-principal-qtd" class="tnum" style="font-size:22px;font-weight:700;color:#B34954;">-</span><span id="rs-perdido-principal-valor" class="tnum" style="font-size:22px;font-weight:700;color:#B34954;">-</span></div><div style="margin-top:6px;display:grid;grid-template-columns:1fr auto auto;gap:5px 16px;align-items:center;"><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Top 3 status em valor</span><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Qtd</span><span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9AA4BE;">Valor</span><span id="rs-perdido-status-0" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-perdido-qtd-0" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-valor-0" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-status-1" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-perdido-qtd-1" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-valor-1" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-status-2" style="font-size:14px;color:#0E1A3A;">-</span><span id="rs-perdido-qtd-2" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-perdido-valor-2" class="tnum" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span></div></div><div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:20px;padding:12px 19px;box-shadow:0 12px 34px rgba(24,38,90,0.06);"><div style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#2B50F0;background:#F1F5FF;border-radius:8px;padding:5px 10px;margin-bottom:8px;">Top 3 em aberto</div><div style="display:grid;gap:7px;"><div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="display:flex;align-items:center;gap:6px;min-width:0;"><span id="rs-top-aberto-orc-0" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-aberto-revisao-0" style="flex:none;"></span></span><span style="display:flex;align-items:center;gap:6px;flex:none;"><span id="rs-top-aberto-valor-0" class="tnum" style="font-size:15px;font-weight:700;color:#2B50F0;">-</span><button id="rs-top-aberto-btn-0" style="border:none;background:transparent;cursor:pointer;color:#2B50F0;padding:2px;display:flex;align-items:center;line-height:0;" title="Ver itens do orçamento" aria-label="Ver itens do orçamento"><span class="material-symbols-outlined" style="font-size:20px;" aria-hidden="true">quick_reference_all</span></button></span></div><div id="rs-top-aberto-meta-0" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="display:flex;align-items:center;gap:6px;min-width:0;"><span id="rs-top-aberto-orc-1" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-aberto-revisao-1" style="flex:none;"></span></span><span style="display:flex;align-items:center;gap:6px;flex:none;"><span id="rs-top-aberto-valor-1" class="tnum" style="font-size:15px;font-weight:700;color:#2B50F0;">-</span><button id="rs-top-aberto-btn-1" style="border:none;background:transparent;cursor:pointer;color:#2B50F0;padding:2px;display:flex;align-items:center;line-height:0;" title="Ver itens do orçamento" aria-label="Ver itens do orçamento"><span class="material-symbols-outlined" style="font-size:20px;" aria-hidden="true">quick_reference_all</span></button></span></div><div id="rs-top-aberto-meta-1" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="display:flex;align-items:center;gap:6px;min-width:0;"><span id="rs-top-aberto-orc-2" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-aberto-revisao-2" style="flex:none;"></span></span><span style="display:flex;align-items:center;gap:6px;flex:none;"><span id="rs-top-aberto-valor-2" class="tnum" style="font-size:15px;font-weight:700;color:#2B50F0;">-</span><button id="rs-top-aberto-btn-2" style="border:none;background:transparent;cursor:pointer;color:#2B50F0;padding:2px;display:flex;align-items:center;line-height:0;" title="Ver itens do orçamento" aria-label="Ver itens do orçamento"><span class="material-symbols-outlined" style="font-size:20px;" aria-hidden="true">quick_reference_all</span></button></span></div><div id="rs-top-aberto-meta-2" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div></div></div><div class="hover-scale" style="background:#fff;border:1px solid #E7EBF5;border-radius:20px;padding:12px 19px;box-shadow:0 12px 34px rgba(24,38,90,0.06);"><div style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#B34954;background:#F2E1E3;border-radius:8px;padding:5px 10px;margin-bottom:8px;">Top 3 perdidos</div><div style="display:grid;gap:7px;"><div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="display:flex;align-items:center;gap:6px;min-width:0;"><span id="rs-top-perdido-orc-0" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-perdido-revisao-0" style="flex:none;"></span></span><span style="display:flex;align-items:center;gap:6px;flex:none;"><span id="rs-top-perdido-valor-0" class="tnum" style="font-size:15px;font-weight:700;color:#B34954;">-</span><button id="rs-top-perdido-btn-0" style="border:none;background:transparent;cursor:pointer;color:#B34954;padding:2px;display:flex;align-items:center;line-height:0;" title="Ver itens do orçamento" aria-label="Ver itens do orçamento"><span class="material-symbols-outlined" style="font-size:20px;" aria-hidden="true">quick_reference_all</span></button></span></div><div id="rs-top-perdido-meta-0" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="display:flex;align-items:center;gap:6px;min-width:0;"><span id="rs-top-perdido-orc-1" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-perdido-revisao-1" style="flex:none;"></span></span><span style="display:flex;align-items:center;gap:6px;flex:none;"><span id="rs-top-perdido-valor-1" class="tnum" style="font-size:15px;font-weight:700;color:#B34954;">-</span><button id="rs-top-perdido-btn-1" style="border:none;background:transparent;cursor:pointer;color:#B34954;padding:2px;display:flex;align-items:center;line-height:0;" title="Ver itens do orçamento" aria-label="Ver itens do orçamento"><span class="material-symbols-outlined" style="font-size:20px;" aria-hidden="true">quick_reference_all</span></button></span></div><div id="rs-top-perdido-meta-1" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div><div><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="display:flex;align-items:center;gap:6px;min-width:0;"><span id="rs-top-perdido-orc-2" style="font-size:14px;font-weight:700;color:#0E1A3A;">-</span><span id="rs-top-perdido-revisao-2" style="flex:none;"></span></span><span style="display:flex;align-items:center;gap:6px;flex:none;"><span id="rs-top-perdido-valor-2" class="tnum" style="font-size:15px;font-weight:700;color:#B34954;">-</span><button id="rs-top-perdido-btn-2" style="border:none;background:transparent;cursor:pointer;color:#B34954;padding:2px;display:flex;align-items:center;line-height:0;" title="Ver itens do orçamento" aria-label="Ver itens do orçamento"><span class="material-symbols-outlined" style="font-size:20px;" aria-hidden="true">quick_reference_all</span></button></span></div><div id="rs-top-perdido-meta-2" style="font-size:12px;color:#7C88A6;margin-top:2px;">-</div></div></div></div></div>
     </div>
     </sc-if>
 <sc-if value="{{ isTopItens }}" hint-placeholder-val="{{ false }}">
@@ -490,11 +490,49 @@
 </div>
 </div>
 </sc-if>
+<sc-if value="{{ modalOrcamentoAberto }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ fecharModalOrcamento }}" style="position:fixed;inset:0;background:rgba(14,26,58,0.45);display:flex;align-items:center;justify-content:center;z-index:50;animation:modalOverlayIn .18s ease;">
+<div style="transform:scale({{ scale }});transform-origin:center center;">
+<div onClick="{{ pararPropagacao }}" style="background:#fff;border-radius:20px;width:1300px;max-height:760px;padding:32px;box-shadow:0 24px 60px rgba(24,38,90,0.25);display:flex;flex-direction:column;gap:18px;animation:modalDialogIn .22s cubic-bezier(0.16,1,0.3,1);">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+<div style="display:flex;flex-direction:column;gap:6px;">
+<span id="modal-orc-titulo" style="font-size:20px;font-weight:700;color:#0E1A3A;">-</span>
+<span id="modal-orc-cliente" style="font-size:15px;font-weight:700;color:#0E1A3A;">-</span>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;">
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#9AA4BE;"><span class="material-symbols-outlined" style="font-size:15px;" aria-hidden="true">calendar_month</span><span id="modal-orc-criado">-</span></span>
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#9AA4BE;"><span class="material-symbols-outlined" style="font-size:15px;" aria-hidden="true">person</span><span id="modal-orc-vendedor">-</span></span>
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#9AA4BE;"><span class="material-symbols-outlined" style="font-size:15px;" aria-hidden="true">flag</span><span id="modal-orc-status">-</span></span>
+<span id="modal-orc-revisao" style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:#9AA4BE;">-</span>
+</div>
+</div>
+<button onClick="{{ fecharModalOrcamento }}" style="border:none;background:#F1F5FF;border-radius:10px;width:32px;height:32px;font-size:16px;cursor:pointer;color:#5B6478;flex:none;" aria-label="Fechar">×</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+<div style="background:#F6F8FE;border-radius:14px;padding:14px 18px;"><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#7C88A6;display:flex;align-items:center;gap:5px;"><span class="material-symbols-outlined" style="font-size:15px;text-transform:none;" aria-hidden="true">paid</span>Valor do orçamento</div><div id="modal-orc-valor" style="font-size:22px;font-weight:700;color:#0E1A3A;margin-top:6px;">-</div></div>
+<div style="background:#F6F8FE;border-radius:14px;padding:14px 18px;"><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#7C88A6;display:flex;align-items:center;gap:5px;"><span class="material-symbols-outlined" style="font-size:15px;text-transform:none;" aria-hidden="true">inventory_2</span>Itens no orçamento</div><div id="modal-orc-qtd-itens" style="font-size:22px;font-weight:700;color:#0E1A3A;margin-top:6px;">-</div></div>
+</div>
+<div style="overflow-y:auto;max-height:460px;border:1px solid #E7EBF5;border-radius:12px;">
+<table style="width:100%;border-collapse:collapse;">
+<thead><tr style="background:#F6F8FE;position:sticky;top:0;">
+<th style="padding:10px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;color:#9AA4BE;white-space:nowrap;">Código</th>
+<th style="padding:10px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;color:#9AA4BE;">Descrição</th>
+<th style="padding:10px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;color:#9AA4BE;white-space:nowrap;">Quantidade</th>
+<th style="padding:10px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;color:#9AA4BE;white-space:nowrap;">Preço tabela</th>
+<th style="padding:10px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;color:#9AA4BE;white-space:nowrap;">Preço praticado</th>
+<th style="padding:10px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;color:#9AA4BE;white-space:nowrap;">Valor</th>
+</tr></thead>
+<tbody id="modal-orc-tbody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;},&quot;showUplift&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
-  state = { scale: 1, screen: 'conversao', modalAberto: false, modalItem: null, dashboardVisible: false };
+  state = { scale: 1, screen: 'conversao', modalAberto: false, modalItem: null, modalOrcamentoAberto: false, modalOrcamento: null, dashboardVisible: false };
 
   constructor(props){
     super(props);
@@ -704,11 +742,29 @@ class Component extends DCLogic {
       this.setText(`rs-top-aberto-orc-${i}`, topAberto.orcamento ? `${topAberto.orcamento} | ${topAberto.cliente || ''}` : '-');
       this.setText(`rs-top-aberto-valor-${i}`, topAberto.valor || '-');
       this.setText(`rs-top-aberto-meta-${i}`, topAberto.vendedor ? `Vendedor: ${topAberto.vendedor} | Status: ${topAberto.status || '-'}` : '-');
+      const btnTopAberto = document.getElementById(`rs-top-aberto-btn-${i}`);
+      if(btnTopAberto){
+        btnTopAberto.style.visibility = topAberto.orcamento ? 'visible' : 'hidden';
+        btnTopAberto.onclick = () => this.abrirModalOrcamento(topAberto);
+      }
+      const revisaoTopAberto = document.getElementById(`rs-top-aberto-revisao-${i}`);
+      if(revisaoTopAberto) revisaoTopAberto.innerHTML = topAberto.revisao_gestor
+        ? '<span class="material-symbols-outlined" style="font-size:16px;color:#2B50F0;" aria-hidden="true" title="Passou por revisão do gestor">how_to_reg</span>'
+        : '';
 
       const topPerdido = data.perdido?.top_5?.[i] || {};
       this.setText(`rs-top-perdido-orc-${i}`, topPerdido.orcamento ? `${topPerdido.orcamento} | ${topPerdido.cliente || ''}` : '-');
       this.setText(`rs-top-perdido-valor-${i}`, topPerdido.valor || '-');
       this.setText(`rs-top-perdido-meta-${i}`, topPerdido.vendedor ? `Vendedor: ${topPerdido.vendedor} | Status: ${topPerdido.status || '-'}` : '-');
+      const btnTopPerdido = document.getElementById(`rs-top-perdido-btn-${i}`);
+      if(btnTopPerdido){
+        btnTopPerdido.style.visibility = topPerdido.orcamento ? 'visible' : 'hidden';
+        btnTopPerdido.onclick = () => this.abrirModalOrcamento(topPerdido);
+      }
+      const revisaoTopPerdido = document.getElementById(`rs-top-perdido-revisao-${i}`);
+      if(revisaoTopPerdido) revisaoTopPerdido.innerHTML = topPerdido.revisao_gestor
+        ? '<span class="material-symbols-outlined" style="font-size:16px;color:#B34954;" aria-hidden="true" title="Passou por revisão do gestor">how_to_reg</span>'
+        : '';
     }
   }
 
@@ -775,6 +831,48 @@ class Component extends DCLogic {
 
   fecharModal(){
     this.setState({ modalAberto: false, modalItem: null });
+  }
+
+  abrirModalOrcamento(orc){
+    this.setState({ modalOrcamentoAberto: true, modalOrcamento: orc });
+    setTimeout(() => this.preencherModalOrcamento(orc), 30);
+  }
+
+  fecharModalOrcamento(){
+    this.setState({ modalOrcamentoAberto: false, modalOrcamento: null });
+  }
+
+  preencherModalOrcamento(orc){
+    this.setText('modal-orc-titulo', `Orçamento ${orc.orcamento || '-'}`);
+    this.setText('modal-orc-cliente', orc.cliente || '-');
+    this.setText('modal-orc-criado', orc.data_criacao || '-');
+    this.setText('modal-orc-vendedor', orc.vendedor || '-');
+    this.setText('modal-orc-status', orc.status || '-');
+    const revisaoEl = document.getElementById('modal-orc-revisao');
+    if(revisaoEl){
+      revisaoEl.innerHTML = orc.revisao_gestor
+        ? '<span class="material-symbols-outlined" style="font-size:15px;color:#2B50F0;" aria-hidden="true">how_to_reg</span>Passou por revisão'
+        : '<span class="material-symbols-outlined" style="font-size:15px;color:#C7CEDD;" aria-hidden="true">how_to_reg</span>Sem revisão do gestor';
+    }
+    this.setText('modal-orc-valor', orc.valor || '-');
+
+    const itens = orc.itens || [];
+    this.setText('modal-orc-qtd-itens', String(itens.length));
+
+    const tbody = document.getElementById('modal-orc-tbody');
+    if(!tbody) return;
+    if(itens.length === 0){
+      tbody.innerHTML = `<tr><td colspan="6" style="padding:16px;text-align:center;font-size:13px;color:#9AA4BE;">Nenhum item encontrado para este orçamento.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = itens.map((it) => `<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #E7EBF5;font-size:13px;color:#0E1A3A;white-space:nowrap;">${this.escapeHtml(it.codigo)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #E7EBF5;font-size:13px;color:#0E1A3A;">${this.escapeHtml(it.descricao) || '-'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #E7EBF5;font-size:13px;color:#0E1A3A;text-align:right;white-space:nowrap;">${this.escapeHtml(it.quantidade_fmt)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #E7EBF5;font-size:13px;color:#0E1A3A;text-align:right;white-space:nowrap;">${this.escapeHtml(it.preco_tabela)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #E7EBF5;font-size:13px;color:#0E1A3A;text-align:right;white-space:nowrap;">${this.escapeHtml(it.preco_praticado)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #E7EBF5;font-size:13px;font-weight:700;color:#0E1A3A;text-align:right;white-space:nowrap;">${this.escapeHtml(it.valor)}</td>
+    </tr>`).join('');
   }
 
   preencherModal(item){
@@ -921,6 +1019,8 @@ class Component extends DCLogic {
       isTopItens,
       modalAberto: this.state.modalAberto,
       fecharModal: () => this.fecharModal(),
+      modalOrcamentoAberto: this.state.modalOrcamentoAberto,
+      fecharModalOrcamento: () => this.fecharModalOrcamento(),
       pararPropagacao: (e) => e.stopPropagation(),
       goConversao: () => {
         this.setState({ screen: 'conversao' });
