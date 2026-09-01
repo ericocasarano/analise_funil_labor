@@ -171,7 +171,18 @@ def resolve_commercial_period(start_date: str, end_date: str) -> str:
     return "nao identificado"
 
 
-def resolve_title_period_date(entrada_dax1_path: Path, start_date: str, end_date: str) -> datetime:
+def resolve_title_period_date(
+    entrada_dax1_path: Path, commercial_end_date: str, start_date: str, end_date: str
+) -> datetime:
+    # O titulo deve refletir o mes do ciclo comercial (mesmo mes exibido em
+    # "Mes Comercial"), nao o fim da fatia "ate ontem" analisada - senao o
+    # titulo mostra o mes anterior nos primeiros dias de um ciclo novo.
+    if commercial_end_date:
+        try:
+            return datetime.strptime(commercial_end_date, "%Y-%m-%d")
+        except ValueError:
+            pass
+
     if start_date and end_date:
         try:
             return datetime.strptime(end_date, "%Y-%m-%d")
@@ -309,7 +320,7 @@ def build_summary(
     )
 
     agora = datetime.now()
-    referencia_periodo = resolve_title_period_date(entrada_dax1_path, start_date, end_date)
+    referencia_periodo = resolve_title_period_date(entrada_dax1_path, commercial_end_date, start_date, end_date)
     meses_pt = {
         1: "Janeiro",
         2: "Fevereiro",
