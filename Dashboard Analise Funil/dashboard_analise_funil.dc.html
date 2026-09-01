@@ -483,14 +483,16 @@ class Component extends DCLogic {
   }
 
   fmtPp(v){
-    const abs = Math.abs(v || 0).toFixed(2).replace('.', ',');
-    const arrow = (v || 0) >= 0 ? '▲' : '▼';
+    const num = v || 0;
+    const abs = Math.abs(num).toFixed(2).replace('.', ',');
+    const arrow = num === 0 ? '–' : (num > 0 ? '▲' : '▼');
     return `${arrow} ${abs} p.p.`;
   }
 
   fmtDeltaPct(v){
-    const abs = Math.abs(v || 0).toFixed(2).replace('.', ',');
-    const arrow = (v || 0) >= 0 ? '▲' : '▼';
+    const num = v || 0;
+    const abs = Math.abs(num).toFixed(2).replace('.', ',');
+    const arrow = num === 0 ? '–' : (num > 0 ? '▲' : '▼');
     return `${arrow} ${abs}%`;
   }
 
@@ -521,9 +523,15 @@ class Component extends DCLogic {
   setDeltaChip(id, rawValue, formatter, goodWhenPositive = true){
     const el = document.getElementById(id);
     if(!el || rawValue === undefined || rawValue === null) return;
-    const positive = Number(rawValue) >= 0;
+    const num = Number(rawValue);
+    el.textContent = formatter.call(this, num);
+    if(num === 0){
+      el.style.color = '#7C88A6';
+      el.style.background = '#F0F2F8';
+      return;
+    }
+    const positive = num >= 0;
     const good = positive ? goodWhenPositive : !goodWhenPositive;
-    el.textContent = formatter.call(this, Number(rawValue));
     el.style.color = good ? '#1F8A5B' : '#C2410C';
     el.style.background = good ? '#E7F5EE' : '#FCEEE2';
   }
