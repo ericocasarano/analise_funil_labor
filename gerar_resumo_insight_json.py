@@ -249,6 +249,9 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
     col_revisao_gestor = next(
         (c for c in work.columns if "revis" in c.lower() and "gestor" in c.lower()), None
     )
+    col_tipo_cliente = next(
+        (c for c in work.columns if "tipo" in c.lower() and "cliente" in c.lower()), None
+    )
 
     display_map = {normalize_text(src): display for src, display in STATUS_GROUPS[group_key]}
     target_norms = list(display_map.keys())
@@ -282,11 +285,13 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
             orc_id = int(row["ID_Orcamento"]) if pd.notna(row["ID_Orcamento"]) else None
             data_criacao = row.get("Data")
             revisao_valor = row.get(col_revisao_gestor) if col_revisao_gestor else None
+            tipo_cliente = str(row.get(col_tipo_cliente, "") or "").strip() if col_tipo_cliente else ""
             top_orcamentos.append(
                 {
                     "orcamento": format_budget_id(row["ID_Orcamento"]),
                     "vendedor": str(row["Vendedor"]).strip(),
                     "cliente": str(row["Cliente"]).strip(),
+                    "tipo_cliente": tipo_cliente,
                     "valor": format_money_short(row["Valor"]),
                     "valor_numero": float(row["Valor"]),
                     "status": display_map.get(row["Status_Norm"], str(row["Status Atual"]).strip()),
@@ -318,6 +323,7 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
         "orcamento": "",
         "vendedor": "",
         "cliente": "",
+        "tipo_cliente": "",
         "valor": "",
         "valor_numero": 0.0,
         "status": "",
