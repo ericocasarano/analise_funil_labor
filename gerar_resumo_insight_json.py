@@ -267,6 +267,7 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
             "valor_numero": float(row["Valor"]),
             "status": display_map.get(row["Status_Norm"], str(row["Status Atual"]).strip()),
             "data_criacao": data_criacao.strftime("%d/%m/%Y") if pd.notna(data_criacao) else "-",
+            "data_criacao_iso": data_criacao.strftime("%Y-%m-%d") if pd.notna(data_criacao) else "",
             "revisao_gestor": bool(pd.notna(revisao_valor) and float(revisao_valor) == 1),
             "itens": itens_por_orcamento.get(orc_id, []),
         }
@@ -334,6 +335,7 @@ def build_group_summary(oportunidades_df: pd.DataFrame, group_key: str, itens_po
         "valor_numero": 0.0,
         "status": "",
         "data_criacao": "",
+        "data_criacao_iso": "",
         "revisao_gestor": False,
         "itens": [],
     }
