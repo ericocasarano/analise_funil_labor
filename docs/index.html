@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="https://bunzlbr.sharepoint.com/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/comparativo_dashboard.js" onerror="window.__COMPARATIVO_DATA_FAILED = true;"></script>
-<script src="https://bunzlbr.sharepoint.com/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/resumo_insight_dashboard.js" onerror="window.__RESUMO_DATA_FAILED = true;"></script>
-<script src="https://bunzlbr.sharepoint.com/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/top_itens_dashboard.js" onerror="window.__TOPITENS_DATA_FAILED = true;"></script>
-<script src="https://bunzlbr.sharepoint.com/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/historico_dashboard.js" onerror="window.__HISTORICO_DATA_FAILED = true;"></script>
+<script src="https://bunzlbr.sharepoint.com/:u:/r/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/comparativo_dashboard.js?d=wcb1370849edf402bb9f5c5a5e102238d&csf=1&web=1&e=blbV6Y" onerror="window.__COMPARATIVO_DATA_FAILED = true;"></script>
+<script src="https://bunzlbr.sharepoint.com/:u:/r/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/resumo_insight_dashboard.js?d=wace37474b95349bba0eeda688649cb00&csf=1&web=1&e=bo635p" onerror="window.__RESUMO_DATA_FAILED = true;"></script>
+<script src="https://bunzlbr.sharepoint.com/:u:/r/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/top_itens_dashboard.js?d=w108bfa0aec2849c98b7616edc1a5a0ad&csf=1&web=1&e=Vcd9fB" onerror="window.__TOPITENS_DATA_FAILED = true;"></script>
+<script src="https://bunzlbr.sharepoint.com/:u:/r/sites/InsightsVendas/Documentos%20Compartilhados/Producao/StaticWebApp/historico_dashboard.js?d=w40531f7e429949d59ff24a7dc0336331&csf=1&web=1&e=0LNPWe" onerror="window.__HISTORICO_DATA_FAILED = true;"></script>
 </head>
 <body>
 <x-dc>
@@ -1527,11 +1527,11 @@ class Component extends DCLogic {
 
 <div id="df-noaccess-modal" class="df-noaccess-modal" aria-hidden="true">
   <div class="df-noaccess-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="df-noaccess-title">
-    <div class="df-noaccess-emoji">⚠️</div>
-    <div id="df-noaccess-title" class="df-noaccess-title">Não foi possível carregar os dados</div>
-    <div class="df-noaccess-body">Os arquivos do Resumo Atual, do Comparativo ou do Top Itens não ficaram disponíveis. Isso pode ocorrer por falha de conexão ou da sessão Microsoft, mesmo quando você tem permissão no SharePoint.
+    <div class="df-noaccess-emoji">🔒</div>
+    <div id="df-noaccess-title" class="df-noaccess-title">Entre com sua conta corporativa</div>
+    <div class="df-noaccess-body">O Resumo Atual, o Comparativo e o Top Itens contêm informações comerciais de uso interno. Para visualizar esses dados, você precisa estar conectado à sua conta corporativa Microsoft e ter permissão de acesso.
       <br><br>
-      <strong>Para tentar novamente:</strong>
+      <strong>Já tem permissão?</strong>
       <ol style="text-align:left;margin:10px auto 0;padding-left:20px;max-width:380px;">
         <li>Clique em <strong>Acessar SharePoint</strong> e faça login, se solicitado.</li>
         <li>Volte para esta página e clique em <strong>Recarregar página</strong>.</li>
@@ -1548,15 +1548,6 @@ class Component extends DCLogic {
   function __revealDashboard() {
     if (__dashboardRevealed) return;
     if (window.__dcDashboard) {
-      var modal = document.getElementById('df-noaccess-modal');
-      if (modal) {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-      }
-      window.__dcDashboard.applyResumoAtualData();
-      window.__dcDashboard.applyComparativoData();
-      window.__dcDashboard.applyTopItensData();
-      window.__dcDashboard.applyHistoricoData();
       __dashboardRevealed = true;
       window.__dcDashboard.setState({ dashboardVisible: true });
     } else {
@@ -1576,19 +1567,21 @@ class Component extends DCLogic {
     }
   });
   var __accessCheckAttempts = 0;
-  var __maxAccessCheckAttempts = 60; // 60 x 500ms = 30s
+  var __maxAccessCheckAttempts = 16; // 16 x 500ms = 8s
   function __pollDashboardAccess() {
-    // Disponibilidade de dados não é uma verificação de permissão.
-    // Dados válidos prevalecem sobre marcadores de falhas anteriores.
+    if (window.__COMPARATIVO_DATA_FAILED || window.__RESUMO_DATA_FAILED || window.__TOPITENS_DATA_FAILED) {
+      __showNoAccessModal();
+      return;
+    }
     if (window.WIN_RATE_COMPARATIVO_DATA && window.WIN_RATE_RESUMO_ATUAL_DATA && window.WIN_RATE_TOP_ITENS_DATA) {
       __revealDashboard();
       return;
     }
     __accessCheckAttempts++;
-    if (window.__COMPARATIVO_DATA_FAILED || window.__RESUMO_DATA_FAILED || window.__TOPITENS_DATA_FAILED || __accessCheckAttempts >= __maxAccessCheckAttempts) {
+    if (__accessCheckAttempts >= __maxAccessCheckAttempts) {
       __showNoAccessModal();
+      return;
     }
-    // Permite recuperação caso os dados apareçam após o aviso.
     setTimeout(__pollDashboardAccess, 500);
   }
   __pollDashboardAccess();
